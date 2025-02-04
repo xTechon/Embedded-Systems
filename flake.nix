@@ -3,31 +3,52 @@
 
   inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1.*.tar.gz";
 
-  outputs = { self, nixpkgs }:
+  outputs = inputs:
     let
-      supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      system = "x86_64-linux";
+      pkgs = import inputs.nixpkgs { inherit system; config.allowUnfree = true; };
+      #supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      /*
       forEachSupportedSystem = f: nixpkgs.lib.genAttrs supportedSystems (system: f {
         pkgs = import nixpkgs { inherit system; };
-      });
+      });*/
+
+      cpp = with pkgs; [
+        clang-tools
+        cmake
+        codespell
+        cppcheck
+        gtest
+        gcc11
+        lldb
+      ];
+      verilog = with pkgs; [
+        iverilog # synthesizer
+        svls # language server
+      ];
+
+      hw1Shell = pkgs.mkShell {
+        packages = with pkgs; cpp ++ verilog ++ [
+          systemc
+        ];
+        shellHook = ''
+          export LABEL="HW1"
+        '';
+      };
+      p1Shell = pkgs.mkShell {
+        packages = cpp;
+        shellHook = ''
+          export LABEL="P1"
+          echo $LABEL
+        '';
+      };
+
     in
     {
-      devShells = forEachSupportedSystem ({ pkgs }: {
-        default = pkgs.mkShell.override
-          {
-            # Override stdenv in order to change compiler:
-            # stdenv = pkgs.clangStdenv;
-          }
-          {
-            packages = with pkgs; [
-              clang-tools
-              cmake
-              codespell
-              cppcheck
-              gtest
-              gcc11
-              lldb
-            ] ++ (if system == "aarch64-darwin" then [ ] else [ gdb ]);
-          };
-      });
+      devShells.${system} = {
+        default = hw1Shell;
+        hw1 = hw1Shell;
+        p1 = p1Shell;
+      };
     };
 }
