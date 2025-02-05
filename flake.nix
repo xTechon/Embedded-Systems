@@ -29,6 +29,7 @@
             extensions.open-vsx.xaver.clang-format
             extensions.open-vsx.llvm-vs-code-extensions.vscode-clangd
             extensions.open-vsx.vadimcn.vscode-lldb
+            extensions.open-vsx.zokugun.explicit-folding
           ];
         };
 
