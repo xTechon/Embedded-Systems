@@ -42,6 +42,7 @@
         cmake
         codespell
         cppcheck
+        gnumake
         gtest
         lldb
         clang

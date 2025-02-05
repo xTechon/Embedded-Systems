@@ -6,7 +6,7 @@
         {
             "label": "BuildHW1SysC",
             "type": "shell",
-            "command": "make",
+            "command": "cmake",
             "options": {
                 "cwd": "${workspaceFolder}/HW1/SystemC"
             },
@@ -17,6 +17,8 @@
                 //"-ggdb",
                 //"-fno-eliminate-unused-debug-symbols",
                 //"-o ${workspaceFolder}/HW1/SystemC/bin/${fileBasenameNoExtension}"
+                "--build",
+                "."
             ],
             "group": "build",
             "presentation": {
