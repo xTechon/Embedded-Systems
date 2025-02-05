@@ -17,22 +17,24 @@
       forEachSupportedSystem = f: nixpkgs.lib.genAttrs supportedSystems (system: f {
         pkgs = import nixpkgs { inherit system; };
       });*/
-      
+
       # run with `nix develop .#codium`
       packages.${system}.codium = pkgs.vscode-with-extensions.override {
-          vscode = pkgs.vscodium;
-          vscodeExtensions = [
-            extensions.vscode-marketplace.dalance.svls-vscode  
-            extensions.open-vsx.bbenoist.nix
-            extensions.open-vsx.jnoortheen.nix-ide
-            extensions.open-vsx.asvetliakov.vscode-neovim
-            extensions.open-vsx.xaver.clang-format
-            extensions.open-vsx.llvm-vs-code-extensions.vscode-clangd
-            extensions.open-vsx.vadimcn.vscode-lldb
-            extensions.open-vsx.zokugun.explicit-folding
-            extensions.open-vsx.tomoki1207.pdf
-          ];
-        };
+        vscode = pkgs.vscodium;
+        vscodeExtensions = [
+          extensions.vscode-marketplace.dalance.svls-vscode
+          extensions.open-vsx.bbenoist.nix
+          extensions.open-vsx.jnoortheen.nix-ide
+          extensions.open-vsx.asvetliakov.vscode-neovim
+          extensions.open-vsx.xaver.clang-format
+          extensions.open-vsx.llvm-vs-code-extensions.vscode-clangd
+          pkgs.vscode-extensions.vadimcn.vscode-lldb # nix-pkg version patched to work
+          extensions.open-vsx.zokugun.explicit-folding
+          extensions.open-vsx.tomoki1207.pdf
+          extensions.open-vsx.twxs.cmake
+        ];
+      };
+      code = packages.${system}.codium;
 
 
       cpp = with pkgs; [
@@ -41,8 +43,15 @@
         codespell
         cppcheck
         gtest
-        gcc11
         lldb
+        clang
+        systemc
+      ];
+
+      cppBuild = with pkgs; [
+        systemc
+        cmake
+        clang
       ];
 
       verilog = with pkgs; [
@@ -50,19 +59,23 @@
         svls # language server
       ];
 
-      hw1Shell = pkgs.mkShell {
-        packages = cpp ++ verilog ++ [
-          pkgs.systemc
-        ];
-        shellHook = ''
-          export LABEL="HW1"
-        '';
-      };
+      hw1Shell = pkgs.mkShell.override
+        { stdenv = pkgs.clangStdenv;}
+        {
+          packages = cpp ++ verilog ++ [
+            code
+          ];
+          shellHook = ''
+            export LABEL="HW1"
+            export CXX=clang++
+            export CMAKE_EXPORT_COMPILE_COMMANDS=ON
+          '';
+          buildInputs = cppBuild;
+        };
       p1Shell = pkgs.mkShell {
         packages = cpp;
         shellHook = ''
           export LABEL="P1"
-          echo $LABEL
         '';
       };
 
