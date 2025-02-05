@@ -30,6 +30,7 @@
             extensions.open-vsx.llvm-vs-code-extensions.vscode-clangd
             extensions.open-vsx.vadimcn.vscode-lldb
             extensions.open-vsx.zokugun.explicit-folding
+            extensions.open-vsx.tomoki1207.pdf
           ];
         };
 
