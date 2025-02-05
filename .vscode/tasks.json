@@ -1,0 +1,28 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "BuildHW1SysC",
+            "type": "shell",
+            "command": "make",
+            "options": {
+                "cwd": "${workspaceFolder}/HW1/SystemC"
+            },
+            "args": [
+                //"${file}",
+                //"-g",
+                //"-Og",
+                //"-ggdb",
+                //"-fno-eliminate-unused-debug-symbols",
+                //"-o ${workspaceFolder}/HW1/SystemC/bin/${fileBasenameNoExtension}"
+            ],
+            "group": "build",
+            "presentation": {
+                // Reveal the output only if unrecognized errors occur.
+                "reveal": "silent"
+            },
+        }
+    ]
+}
