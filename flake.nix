@@ -45,8 +45,6 @@
         gnumake
         gtest
         lldb
-        clang
-        systemc
       ];
 
       cppBuild = with pkgs; [
@@ -61,10 +59,12 @@
       ];
 
       hw1Shell = pkgs.mkShell.override
-        { stdenv = pkgs.clangStdenv;}
+        { stdenv = pkgs.clangStdenv; }
         {
           packages = cpp ++ verilog ++ [
             code
+            pkgs.clang
+            pkgs.systemc
           ];
           shellHook = ''
             export LABEL="HW1"
@@ -74,7 +74,10 @@
           buildInputs = cppBuild;
         };
       p1Shell = pkgs.mkShell {
-        packages = cpp;
+        packages = cpp ++ [
+          code
+          pkgs.gcc11 # version of GCC on UF servers
+        ];
         shellHook = ''
           export LABEL="P1"
         '';
@@ -83,7 +86,7 @@
     in
     {
       devShells.${system} = {
-        default = hw1Shell;
+        default = p1Shell;
         hw1 = hw1Shell;
         p1 = p1Shell;
       };
