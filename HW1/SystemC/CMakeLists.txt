@@ -11,7 +11,8 @@ find_package(SystemCLanguage CONFIG REQUIRED)
 find_package(SystemCTLM)
 
 add_executable(${PROJECT_NAME}
-    src/hello_world.cpp
+    #src/hello_world.cpp
+    src/hw1-sysc.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} SystemC::systemc)
