@@ -38,13 +38,13 @@
 
 
       cpp = with pkgs; [
-        clang-tools
+        clang-tools # provide clangd and formatter
         cmake
         codespell
         cppcheck
         gnumake
         gtest
-        lldb
+        lldb # debugger
       ];
 
       cppBuild = with pkgs; [
@@ -73,6 +73,7 @@
           '';
           buildInputs = cppBuild;
         };
+
       p1Shell = pkgs.mkShell {
         packages = cpp ++ [
           code
@@ -80,6 +81,8 @@
         ];
         shellHook = ''
           export LABEL="P1"
+          export CXX=clang++
+          export CMAKE_EXPORT_COMPILE_COMMANDS=ON
         '';
       };
 
