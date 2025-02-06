@@ -146,7 +146,8 @@ int sc_main(int, char*[]) {
   sc_signal<sc_dt::sc_bit, SC_MANY_WRITERS> F;
   sc_signal<sc_dt::sc_bit, SC_MANY_WRITERS> G;
   sc_signal<sc_dt::sc_bit, SC_MANY_WRITERS> H;
-  sc_signal<sc_dt::sc_bit, SC_MANY_WRITERS> SO;
+  sc_signal<sc_dt::sc_bit, SC_MANY_WRITERS> SO1;
+  sc_signal<sc_dt::sc_bit, SC_MANY_WRITERS> SO2;
   
   // declare transitions from graph
   ONE_TO_ONE trans1("trans1");
@@ -163,7 +164,7 @@ int sc_main(int, char*[]) {
   
   // connect nodes and transitions
   // --- Transition 1 ---
-  trans1.in1(SO);
+  trans1.in1(SO1);
   trans1.out1(A);
   
   // --- Transition 3 ---
@@ -177,6 +178,52 @@ int sc_main(int, char*[]) {
   trans4.out1(D);
   
   // --- Transition 5 ---
+  trans5.in1(F);
+  trans5.in2(D);
+  trans5.out1(A);
+  trans5.out2(B);
+  trans5.out3(F);
+  
+  // --- Transition 6 ---
+  trans6.in1(D);
+  trans6.in2(E);
+  trans6.out1(B);
+  trans6.out2(E);
+  
+  // --- Transition 7 --- 
+  trans7.in1(F);
+  trans7.in2(H);
+  trans7.out1(E);
+  
+  // --- Transition 8 ---
+  trans8.in1(SO2);
+  trans8.out1(G);
+  
+  // --- Transition 9 ---
+  trans9.in1(C);
+  trans9.in2(F);
+  trans9.out1(B);
+  trans9.out2(F);
+  
+  // --- Transition 10 ---
+  trans10.in1(E);
+  trans10.in2(C);
+  trans10.out1(A);
+  trans10.out2(B);
+  trans10.out3(E);
+  
+  // --- Transition 11 ---
+  trans11.in1(E);
+  trans11.in2(G);
+  trans11.out1(F);
+  trans11.out2(G);
+  
+  // --- Transition 12 ---
+  trans12.in1(G);
+  trans12.in2(F);
+  trans12.out1(F);
+  trans12.out2(H);
+
   return 0; 
   
   }
