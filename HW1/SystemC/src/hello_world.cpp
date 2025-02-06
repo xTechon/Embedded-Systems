@@ -1,5 +1,7 @@
 // Learn with Examples, 2020, MIT license
 // https://www.learnsystemc.com/
+// use SC bit
+// Nodes are signals/channels, Transitions are Modules with ports
 #include <sysc/kernel/sc_module.h>
 #include <systemc>       // include the systemC header file
 using namespace sc_core; // use namespace
@@ -38,7 +40,7 @@ SC_MODULE(MODULE_B) {
 // module with more arguments in the constructor
 SC_MODULE(MODULE_C) {
   const int i;
-  SC_CTOR(MODULE_C);
+  SC_HAS_PROCESS(MODULE_C);
   // explicit constructor
   MODULE_C (sc_module_name name, int i) : sc_module(name), i(i) {
     SC_METHOD(func_c); // register member function
