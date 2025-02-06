@@ -3,6 +3,8 @@
 #include <sysc/communication/sc_signal_ports.h>
 #include <sysc/datatypes/bit/sc_bit.h>
 #include <sysc/kernel/sc_module.h>
+#include <sysc/kernel/sc_simcontext.h>
+#include <sysc/kernel/sc_time.h>
 #include <systemc>
 
 using namespace sc_core;
@@ -223,6 +225,15 @@ int sc_main(int, char*[]) {
   trans12.in2(F);
   trans12.out1(F);
   trans12.out2(H);
+  
+  // set inital conditions (tokens)
+  SO1 = (sc_dt::sc_bit) 1; // M @ PO
+  SO2 = (sc_dt::sc_bit) 1; // CC @ C
+  B = (sc_dt::sc_bit) 1; // MM @ PO
+  E = (sc_dt::sc_bit) 1; // LL @ H
+                         
+  // set simulation to run for 10 time units (seconds)
+  sc_start(10, SC_SEC);
 
   return 0; 
   
