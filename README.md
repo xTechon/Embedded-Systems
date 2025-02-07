@@ -1,7 +1,7 @@
 ## Embedded Systems Classwork
 
 Classwork for my Embedded Systems Class.
-<br> Uses [nix flakes](https://wiki.nixos.org/wiki/Flakes#Other_Distros,_without_Home-Manager) for consistent development environments.
+<br> Uses [nix](https://nixos.org/guides/how-nix-works/) [flakes](https://wiki.nixos.org/wiki/Flakes#) ([video](https://youtu.be/JCeYq72Sko0)) for consistent development environments.
 
 `nix develop .#[assignment name]` to enter the development environment if you have [nix installed](https://github.com/DeterminateSystems/nix-installer)
 
