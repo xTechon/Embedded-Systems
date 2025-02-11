@@ -11,14 +11,31 @@
                 "cwd": "${workspaceFolder}/HW1/SystemC"
             },
             "args": [
-                //"${file}",
-                //"-g",
-                //"-Og",
-                //"-ggdb",
-                //"-fno-eliminate-unused-debug-symbols",
-                //"-o ${workspaceFolder}/HW1/SystemC/bin/${fileBasenameNoExtension}"
                 "--build",
                 "."
+            ],
+            "group": "build",
+            "presentation": {
+                // Reveal the output only if unrecognized errors occur.
+                "reveal": "silent"
+            },
+        },
+        {
+            "label": "BuildP1CPP",
+            "type": "shell",
+            "command": "g++",
+            "options": {
+                "cwd": "${workspaceFolder}/P1/"
+            },
+            "args": [
+                "-std=c++17",
+                "-g",
+                "-Og",
+                "-ggdb",
+                "-fno-eliminate-unused-debug-symbols",
+                "-o", 
+                "${workspaceFolder}/P1/bin/Psim",
+                "${workspaceFolder}/P1/src/Psim.cpp"
             ],
             "group": "build",
             "presentation": {

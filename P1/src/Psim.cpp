@@ -27,3 +27,14 @@
 // - 8 locations in memory
 // - up to 8 tokens per time step
 // - value can be 0-63
+
+#include <iostream>
+// argc is # of arguments including program execution
+// argv is the array of strings of every argument including execution
+int main(int argc, char* argv[]) {
+    std::cout << "Hello World!" << std::endl;
+    std::cout << argv[1] << std::endl;
+    std::cout << argv[2] << std::endl;
+    std::cout << argv[3] << std::endl;
+    return 0;
+}
