@@ -251,11 +251,12 @@ public:
 
 // #beginregion -- Global Class Variables ---
 
-deque<Node> inputNodes;  // itterable queue of all input nodes
-deque<Node> outputNodes; // itterable queue of all output nodes
-Token* INM[16];          // instruction memory
-Token* RGF[8];           // Register File
-Token* DAM[8];           // Data Memory
+deque<Node> inputNodes;        // dynamic itterable queue of all input nodes
+deque<Node> outputNodes;       // dynamic itterable queue of all output nodes
+Token* INM[16];                // instruction memory
+Token* RGF[8];                 // Register File
+Token* DAM[8];                 // Data Memory
+deque<Transition> transitions; // dynamic itterable of all transitions
 
 // #endregion
 
