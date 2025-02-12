@@ -1,4 +1,5 @@
 #include <deque>
+#include <functional>
 #include <iostream>
 #include <ostream>
 #include <string>
@@ -66,7 +67,7 @@ protected:
 
 public:
   virtual string printToken() override {
-    return begining + opcode + "R" + to_string(destination) + ",R" + to_string(place1) + ",R" + to_string(place2) + ">";
+    return begining + opcode + ",R" + to_string(destination) + ",R" + to_string(place1) + ",R" + to_string(place2) + ">";
   }
 
   opToken(string op, int dest, int src1, int src2) {
@@ -119,6 +120,12 @@ public:
     input = in;
     name  = n;
   }
+
+  // return true if the queue for the node is empty
+  bool nodeIsEmpty() { return this->tokenQueue.empty(); }
+
+  // return the front token of the queue for reading
+  Token* peekFront() { return this->tokenQueue.front(); }
 
   // insert a token to the beginning of the queue
   void pushToken(Token* temp) { this->tokenQueue.push_back(temp); }
@@ -176,11 +183,60 @@ protected:
   Token* output1;
   Node* nInput;
   Node* nOutput;
+  function<Token*(Token*)> deciderFunction;
 
 public:
-  Transition(Node* in, Node* out) {
+  Transition(Node* in, Node* out, function<Token*(Token*)> f) {
     nInput  = in;
     nOutput = out;
+    input1  = nullptr;
+    output1 = nullptr;
+    deciderFunction = f;
+  }
+
+  void moveTokens() {
+    // check if an output is ready and the transition can operate
+    if ((output1 != nullptr) && (canOperate == true)) {
+      // put the output token to the output node
+      nOutput->pushToken(output1);
+
+      // remove the input token from the input node
+      input1 = nInput->popToken();
+
+      // remove the input token
+      //free(input1);
+      //delete input1; //WARN: There will probably be memory leaks from this
+      // Can't be bothered to make a class deconstructor for all the tokens on a time crunch
+      input1 = nullptr;
+
+      // remove the reference to the output token
+      output1 = nullptr;
+
+      // mark the transition as operated
+      canOperate = false;
+    }
+  }
+
+  void setOutputToken(Token* target) { this->output1 = target; }
+
+  void readToken() { input1 = nInput->peekFront(); }
+
+  bool compute() {
+
+    // get the next token from the front of the input queue if any
+    if (nInput->nodeIsEmpty() == true) { return false; }
+    readToken();
+
+    // run the input function to get an output function if any
+    setOutputToken(deciderFunction(input1));
+
+    // skip running if there was no output token
+    if (output1 == nullptr) { return false; }
+    
+    // trigger move tokens if an output token was found
+    moveTokens();
+
+    return true;
   }
 };
 
@@ -195,6 +251,18 @@ Token* RGF[8];           // Register File
 Token* DAM[8];           // Data Memory
 
 // #endregion
+
+// takes a REG token as input and outputs an OP token
+Token* computationTest(Token* DAMTokenInput) {
+  // downcast from the base class to the member class
+  REGToken* temp = dynamic_cast<REGToken*>(DAMTokenInput);
+  
+  // create a new token as an example (conversion)
+  static opToken output("MULT", temp->getReg(), temp->getVal(),1);
+  
+  // up-cast from specific token to generic token
+  return dynamic_cast<Token*>(&output);
+}
 
 // example usage of inheritance
 string printToken(Token* foo) { return foo->printToken(); }
@@ -230,12 +298,26 @@ int main(int argc, char* argv[]) {
   Node Aoutput("A output", &Ainput); // put the input at the output node
   Aoutput.pushToken(&example1);
   Aoutput.pushToken(&example2);
-  cout << Aoutput.printTokenQueue() << endl;
+  cout << Aoutput.printTokenQueue() << endl; // Aoutput --> Ainput
 
   cout << "commit top data" << endl;
   Aoutput.commit(); // move data
   cout << Ainput.printTokenQueue() << endl;
   cout << Aoutput.printTokenQueue() << endl;
+  
+
+  // transition test
+  cout << "transfer via transition" << endl;
+  // create a transition of Ainput --> transition --> Aoutput
+  Transition exampleT(&Ainput, &Aoutput, &computationTest);
+  
+  // trigger the transition
+  exampleT.compute();
+  
+  // display in terminal
+  cout << Ainput.printTokenQueue() << endl;
+  cout << Aoutput.printTokenQueue() << endl;
+
 
   return 0;
 }
