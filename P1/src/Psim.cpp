@@ -176,6 +176,10 @@ public:
 
 // #beginregion --- Transition Class Declaration ---
 
+// recieves token from input class and outputs a token to output class
+// takes a decider function that will convert the input token to an output token
+// the decider function must return a Token* pointer if successfull
+// or a Token* nullptr if not successfull
 class Transition {
 protected:
   bool canOperate = true;
@@ -187,10 +191,10 @@ protected:
 
 public:
   Transition(Node* in, Node* out, function<Token*(Token*)> f) {
-    nInput  = in;
-    nOutput = out;
-    input1  = nullptr;
-    output1 = nullptr;
+    nInput          = in;
+    nOutput         = out;
+    input1          = nullptr;
+    output1         = nullptr;
     deciderFunction = f;
   }
 
@@ -204,8 +208,8 @@ public:
       input1 = nInput->popToken();
 
       // remove the input token
-      //free(input1);
-      //delete input1; //WARN: There will probably be memory leaks from this
+      // free(input1);
+      // delete input1; //WARN: There will probably be memory leaks from this
       // Can't be bothered to make a class deconstructor for all the tokens on a time crunch
       input1 = nullptr;
 
@@ -223,6 +227,9 @@ public:
 
   bool compute() {
 
+    // don't start computaiton if it has already ran
+    if (canOperate == false) { return false; }
+
     // get the next token from the front of the input queue if any
     if (nInput->nodeIsEmpty() == true) { return false; }
     readToken();
@@ -230,9 +237,9 @@ public:
     // run the input function to get an output function if any
     setOutputToken(deciderFunction(input1));
 
-    // skip running if there was no output token
+    // skip running output if there was no output token
     if (output1 == nullptr) { return false; }
-    
+
     // trigger move tokens if an output token was found
     moveTokens();
 
@@ -256,10 +263,10 @@ Token* DAM[8];           // Data Memory
 Token* computationTest(Token* DAMTokenInput) {
   // downcast from the base class to the member class
   REGToken* temp = dynamic_cast<REGToken*>(DAMTokenInput);
-  
+
   // create a new token as an example (conversion)
-  static opToken output("MULT", temp->getReg(), temp->getVal(),1);
-  
+  static opToken output("MULT", temp->getReg(), temp->getVal(), 1);
+
   // up-cast from specific token to generic token
   return dynamic_cast<Token*>(&output);
 }
@@ -304,20 +311,18 @@ int main(int argc, char* argv[]) {
   Aoutput.commit(); // move data
   cout << Ainput.printTokenQueue() << endl;
   cout << Aoutput.printTokenQueue() << endl;
-  
 
   // transition test
   cout << "transfer via transition" << endl;
   // create a transition of Ainput --> transition --> Aoutput
   Transition exampleT(&Ainput, &Aoutput, &computationTest);
-  
+
   // trigger the transition
   exampleT.compute();
-  
+
   // display in terminal
   cout << Ainput.printTokenQueue() << endl;
   cout << Aoutput.printTokenQueue() << endl;
-
 
   return 0;
 }
