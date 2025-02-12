@@ -23,8 +23,9 @@ deque<string> fileOutput; // contains the cycles for the file output
 class Token {
 protected:
   int place1, place2;
+  string begining = "<";
 public:
-  virtual string printToken() { return string("<") + to_string(place1) + "," + to_string(place2) + ">"; };
+  virtual string printToken() { return begining + to_string(place1) + "," + to_string(place2) + ">"; };
 }; // END CLASS
 
 
@@ -36,7 +37,23 @@ class DAMToken : public virtual Token {
     place1 = addr;
     place2 = val;
   }
+  int getAddr() {return place1;}
+  int getVal() {return place2;}
 }; // END CLASS
+
+
+
+class REGToken : public virtual Token {
+  public:
+  REGToken(int reg, int val){
+    place1 = reg;
+    place2 = val;
+    begining = "<R";
+  }
+  virtual string printToken() { return begining + to_string(place1) + "," + to_string(place2) + ">"; };
+  int getReg() {return place1;}
+  int getVal() {return place2;}
+};
     
 
 
@@ -49,7 +66,7 @@ protected:
 
 public:
   virtual string printToken() override {
-    return string("<") + opcode + "R" + to_string(destination) + ",R" + to_string(place1) + ",R" + to_string(place2) + ">";
+    return begining + opcode + "R" + to_string(destination) + ",R" + to_string(place1) + ",R" + to_string(place2) + ">";
   }
   opToken(string op, int dest, int src1, int src2) {
     opcode = op;
@@ -66,12 +83,12 @@ public:
 
 
 //format <OPCODE, Dest Reg, VALUE, VALUE>
-class litteralOpToken : opToken, public virtual Token {
+class litOpToken : opToken, public virtual Token {
 public:
   string printToken() override {
-    return string("<") + opcode + "R" + to_string(destination) + "," + to_string(place1) + "," + to_string(place2) + ">";
+    return begining + opcode + "R" + to_string(destination) + "," + to_string(place1) + "," + to_string(place2) + ">";
   }
-  litteralOpToken(string op, int dest, int src1, int src2) : opToken{op, dest, src1, src2} {}
+  litOpToken(string op, int dest, int src1, int src2) : opToken{op, dest, src1, src2} {}
 }; // END CLASS
 
 // #endregion
@@ -97,10 +114,12 @@ int main(int argc, char* argv[]) {
   
   // example usage of inheritance
   DAMToken example(5,10);
+  REGToken example1(5,10);
   opToken example2(string("ADD"), 3,3,2);
-  litteralOpToken example3(string("ADD"), 3,3,2);
+  litOpToken example3(string("ADD"), 3,3,2);
   
   cout << printToken(&example) << endl;
+  cout << printToken(&example1) << endl;
   cout << printToken(&example2) << endl;
   cout << printToken(&example3) << endl;
 
