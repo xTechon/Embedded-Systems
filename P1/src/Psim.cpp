@@ -1,6 +1,7 @@
 #include <deque>
 #include <iostream>
 #include <ostream>
+#include <queue>
 #include <string>
 
 // can only use std on this project, so it's okay to use this
@@ -24,38 +25,38 @@ class Token {
 protected:
   int place1, place2;
   string begining = "<";
+
 public:
   virtual string printToken() { return begining + to_string(place1) + "," + to_string(place2) + ">"; };
 }; // END CLASS
 
-
-
 // format <addr, val>
 class DAMToken : public virtual Token {
-  public:
+public:
   DAMToken(int addr, int val) {
     place1 = addr;
     place2 = val;
   }
-  int getAddr() {return place1;}
-  int getVal() {return place2;}
+
+  int getAddr() { return place1; }
+
+  int getVal() { return place2; }
 }; // END CLASS
 
-
-
 class REGToken : public virtual Token {
-  public:
-  REGToken(int reg, int val){
-    place1 = reg;
-    place2 = val;
+public:
+  REGToken(int reg, int val) {
+    place1   = reg;
+    place2   = val;
     begining = "<R";
   }
-  virtual string printToken() { return begining + to_string(place1) + "," + to_string(place2) + ">"; };
-  int getReg() {return place1;}
-  int getVal() {return place2;}
-};
-    
 
+  virtual string printToken() { return begining + to_string(place1) + "," + to_string(place2) + ">"; };
+
+  int getReg() { return place1; }
+
+  int getVal() { return place2; }
+};
 
 // format <OPCODE, Dest Reg, Src Reg, Src Reg>
 class opToken : public virtual Token {
@@ -68,35 +69,63 @@ public:
   virtual string printToken() override {
     return begining + opcode + "R" + to_string(destination) + ",R" + to_string(place1) + ",R" + to_string(place2) + ">";
   }
+
   opToken(string op, int dest, int src1, int src2) {
-    opcode = op;
+    opcode      = op;
     destination = dest;
-    place1 = src1;
-    place2 = src2;
+    place1      = src1;
+    place2      = src2;
   }
-  string getOpcode() {return opcode;}
-  int getDest() {return destination;}
-  int getSrc1(){return place1;}
-  int getSrc2(){return place2;}
+
+  string getOpcode() { return opcode; }
+
+  int getDest() { return destination; }
+
+  int getSrc1() { return place1; }
+
+  int getSrc2() { return place2; }
 }; // END CLASS
 
-
-
-//format <OPCODE, Dest Reg, VALUE, VALUE>
+// format <OPCODE, Dest Reg, VALUE, VALUE>
 class litOpToken : opToken, public virtual Token {
 public:
   string printToken() override {
     return begining + opcode + "R" + to_string(destination) + "," + to_string(place1) + "," + to_string(place2) + ">";
   }
-  litOpToken(string op, int dest, int src1, int src2) : opToken{op, dest, src1, src2} {}
+
+  litOpToken(string op, int dest, int src1, int src2)
+      : opToken {op, dest, src1, src2} { }
 }; // END CLASS
 
 // #endregion
 
+// #beginregion --- Node Class Declaration ---
+
+// input node --consumed by--> transition  || Phase 1
+// transitions --write to--> output node   || Phase 1
+// output node --commit to--> input node   || Phase 2
+class Node {
+public:
+  queue<Token> tokenQueue;
+  Node* input;
+
+  Node(Node* in) { input = in; }
+
+  // push the top of the queue to the input queue
+  // as long as the queue is not empty
+  void commit() {
+    if (!(this->tokenQueue.empty())) {
+      Token temp = this->tokenQueue.front();
+      input->tokenQueue.push(temp);
+      this->tokenQueue.pop(); // remove element from this queue
+    }
+  };
+};
+
+// #endregion
+
 // example usage of inheritance
-string printToken(Token* foo) {
-  return foo->printToken(); 
-}
+string printToken(Token* foo) { return foo->printToken(); }
 
 // argc is # of arguments including program execution
 // argv is the array of strings of every argument including execution
@@ -111,18 +140,17 @@ int main(int argc, char* argv[]) {
   }
   // optionally override output filepath if set
   if (argc == 5) { OutputFilePath = argv[4]; }
-  
+
   // example usage of inheritance
-  DAMToken example(5,10);
-  REGToken example1(5,10);
-  opToken example2(string("ADD"), 3,3,2);
-  litOpToken example3(string("ADD"), 3,3,2);
-  
+  DAMToken example(5, 10);
+  REGToken example1(5, 10);
+  opToken example2(string("ADD"), 3, 3, 2);
+  litOpToken example3(string("ADD"), 3, 3, 2);
+
   cout << printToken(&example) << endl;
   cout << printToken(&example1) << endl;
   cout << printToken(&example2) << endl;
   cout << printToken(&example3) << endl;
-
 
   return 0;
 }
