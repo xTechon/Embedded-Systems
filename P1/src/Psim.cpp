@@ -167,7 +167,26 @@ public:
 
 // #endregion
 
-// #beginregion -- Global Class Variables
+// #beginregion --- Transition Class Declaration ---
+
+class Transition {
+protected:
+  bool canOperate = true;
+  Token* input1;
+  Token* output1;
+  Node* nInput;
+  Node* nOutput;
+
+public:
+  Transition(Node* in, Node* out) {
+    nInput  = in;
+    nOutput = out;
+  }
+};
+
+// #endregion
+
+// #beginregion -- Global Class Variables ---
 
 deque<Node> inputNodes;  // itterable queue of all input nodes
 deque<Node> outputNodes; // itterable queue of all output nodes
