@@ -5,8 +5,6 @@
 		}
 	],
 	"settings": {
-		"settings": {
-		"explicitFolding.additionalSchemes": [],
 		"editor.foldingStrategy": "auto",
 		"editor.defaultFoldingRangeProvider": "zokugun.explicit-folding",
 		"explicitFolding.rules": {
@@ -51,6 +49,19 @@
 				}
 			]
 		},
+		"[cpp]": {
+			"explicitFolding.rules": [
+				{
+					"include": "c"
+				},
+				{
+					"beginRegex": "#if(?:n?def)?",
+					"middleRegex": "#el(?:se|if)",
+					"endRegex": "#endif"
+				}
+			],
+		},
 		"editor.showFoldingControls": "always",
+		"explicitFolding.debug": false,
 	}
 }
