@@ -1,15 +1,13 @@
-#include <cstddef>
 #include <deque>
 #include <iostream>
 #include <ostream>
-#include <queue>
 #include <string>
 
 // can only use std on this project, so it's okay to use this
 // would not use this under normal circumstances
 using namespace std;
 
-// #beginregion --- Global variables ---
+// #beginregion --- Global Variables ---
 
 string InstructionsPath = "instructions.txt";
 string RegistersPath    = "registers.txt";
@@ -106,24 +104,76 @@ public:
 // transitions --write to--> output node   || Phase 1
 // output node --commit to--> input node   || Phase 2
 class Node {
-public:
-  queue<Token*> tokenQueue;
+private:
+  deque<Token*> tokenQueue;
   Node* input;
+  string name = "unnamed";
 
-  Node() { input = nullptr; }
+public:
+  Node(string n) {
+    input = nullptr;
+    name  = n;
+  }
 
-  Node(Node* in) { input = in; }
+  Node(string n, Node* in) {
+    input = in;
+    name  = n;
+  }
+
+  // insert a token to the beginning of the queue
+  void pushToken(Token* temp) { this->tokenQueue.push_back(temp); }
+
+  // return the token from the front of the queue and pop it
+  Token* popToken() {
+    static Token* temp = this->tokenQueue.front();
+    this->tokenQueue.pop_front();
+    return temp;
+  }
+
+  string printFrontToken() { return this->tokenQueue.front()->printToken(); }
+
+  string printTokenQueue() {
+    // start the output with the [name]: of the node
+    string output = name + ":";
+
+    // queue itterator
+    auto it = this->tokenQueue.begin();
+
+    // itterate over entire queue
+    while (it != this->tokenQueue.end()) {
+
+      // add the token to the line
+      output.append((*it)->printToken());
+
+      // only add commas if this token is not the last one
+      if ((it + 1 != this->tokenQueue.end())) output.append(",");
+
+      // continue to next value
+      it++;
+    }
+    return output;
+  }
 
   // push the top of the queue to the input queue
   // as long as the queue is not empty
   void commit() {
     if (!(this->tokenQueue.empty()) && (input != nullptr)) {
-      Token* temp = this->tokenQueue.front();
-      input->tokenQueue.push(temp);
-      this->tokenQueue.pop(); // remove element from this queue
+      // Token* temp = this->tokenQueue.front();
+      input->pushToken(this->popToken());
+      // this->tokenQueue.pop_front(); // remove element from this queue
     }
-  };
+  }
 };
+
+// #endregion
+
+// #beginregion -- Global Class Variables
+
+deque<Node> inputNodes;  // itterable queue of all input nodes
+deque<Node> outputNodes; // itterable queue of all output nodes
+Token* INM[16];          // instruction memory
+Token* RGF[8];           // Register File
+Token* DAM[8];           // Data Memory
 
 // #endregion
 
@@ -150,20 +200,23 @@ int main(int argc, char* argv[]) {
   opToken example2(string("ADD"), 3, 3, 2);
   litOpToken example3(string("ADD"), 3, 3, 2);
 
-  cout << printToken(&example) << endl;
-  cout << printToken(&example1) << endl;
-  cout << printToken(&example2) << endl;
-  cout << printToken(&example3) << endl;
+  // cout << printToken(&example) << endl;
+  // cout << printToken(&example1) << endl;
+  // cout << printToken(&example2) << endl;
+  // cout << printToken(&example3) << endl;
 
-  cout << "node test" << endl;
+  // cout << "node test" << endl;
 
-  Node Ainput;           // creat an input node
-  Node Aoutput(&Ainput); // put the input at the output node
-  Aoutput.tokenQueue.push(&example2);
-  cout << "A output: " << Aoutput.tokenQueue.front()->printToken() << endl;
+  Node Ainput("A Input");            // creat an input node
+  Node Aoutput("A output", &Ainput); // put the input at the output node
+  Aoutput.pushToken(&example1);
+  Aoutput.pushToken(&example2);
+  cout << Aoutput.printTokenQueue() << endl;
 
+  cout << "commit top data" << endl;
   Aoutput.commit(); // move data
-  cout << "A input: " << Ainput.tokenQueue.front()->printToken() << endl;
+  cout << Ainput.printTokenQueue() << endl;
+  cout << Aoutput.printTokenQueue() << endl;
 
   return 0;
 }
