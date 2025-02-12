@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <deque>
 #include <iostream>
 #include <ostream>
@@ -106,16 +107,18 @@ public:
 // output node --commit to--> input node   || Phase 2
 class Node {
 public:
-  queue<Token> tokenQueue;
+  queue<Token*> tokenQueue;
   Node* input;
+
+  Node() { input = nullptr; }
 
   Node(Node* in) { input = in; }
 
   // push the top of the queue to the input queue
   // as long as the queue is not empty
   void commit() {
-    if (!(this->tokenQueue.empty())) {
-      Token temp = this->tokenQueue.front();
+    if (!(this->tokenQueue.empty()) && (input != nullptr)) {
+      Token* temp = this->tokenQueue.front();
       input->tokenQueue.push(temp);
       this->tokenQueue.pop(); // remove element from this queue
     }
@@ -151,6 +154,16 @@ int main(int argc, char* argv[]) {
   cout << printToken(&example1) << endl;
   cout << printToken(&example2) << endl;
   cout << printToken(&example3) << endl;
+
+  cout << "node test" << endl;
+
+  Node Ainput;           // creat an input node
+  Node Aoutput(&Ainput); // put the input at the output node
+  Aoutput.tokenQueue.push(&example2);
+  cout << "A output: " << Aoutput.tokenQueue.front()->printToken() << endl;
+
+  Aoutput.commit(); // move data
+  cout << "A input: " << Ainput.tokenQueue.front()->printToken() << endl;
 
   return 0;
 }
