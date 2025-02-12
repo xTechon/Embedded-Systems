@@ -21,7 +21,8 @@
             "args": [
                 "${workspaceFolder}/P1/Sample_input/instructions.txt",
                 "${workspaceFolder}/P1/Sample_input/registers.txt",
-                "${workspaceFolder}/P1/Sample_input/datamemory.txt"
+                "${workspaceFolder}/P1/Sample_input/datamemory.txt",
+                "${workspaceFolder}/P1/Sample_output/simulation.txt"
             ],
             "cwd": "${workspaceFolder}/P1",
             "preLaunchTask": "BuildP1CPP"
