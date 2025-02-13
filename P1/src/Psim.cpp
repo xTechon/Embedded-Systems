@@ -91,7 +91,7 @@ public:
 }; // END CLASS
 
 // format <OPCODE, Dest Reg, VALUE, VALUE>
-class LitOpToken : OpToken, public virtual Token {
+class LitOpToken : public OpToken, public virtual Token {
 public:
   string printToken() override {
     return begining + opcode + "R" + to_string(destination) + "," + to_string(place1) + "," + to_string(place2) + ">";
@@ -435,17 +435,45 @@ Token* ReadAndDecode(Token* in) {
   // get the values from RGF
   int val1 = RGF[source1]->getVal();
   int val2 = RGF[source2]->getVal();
-  
+
   // create the output token
   LitOpToken* output = new LitOpToken(input->getOpcode(), input->getDest(), val1, val2);
-  
+
   // return the pointer to the output token
   return output;
-}
+} // END ReadAndDecode()
 
+// checks the LitOpToken from the INB
+// returns the same token if it's not a LD instr
 Token* Issue1(Token* in) {
-  return nullptr;
-}
+  // input token will be from the INB as a LitOpToken
+  LitOpToken* input = dynamic_cast<LitOpToken*>(in);
+
+  // check if the op is a load instruction
+  bool isLoad = (input->getOpcode() == string("LD"));
+
+  // stop if the token is a LD instruction
+  if (isLoad) return nullptr;
+
+  // move the input otherwise
+  else return input;
+} // END Issue1()
+
+// checks the LitOpToken from the INB
+// returns the same token if it is a LD instr
+Token* Issue2(Token* in) {
+  // input token will be from the INB as a LitOpToken
+  LitOpToken* input = dynamic_cast<LitOpToken*>(in);
+
+  // check if the op is a load instruction
+  bool isLoad = (input->getOpcode() == string("LD"));
+
+  // stop if the token is a LD instruction
+  if (isLoad) return input;
+
+  // move the input otherwise
+  else return nullptr;
+} // END Issue2()
 
 // #endregion
 
