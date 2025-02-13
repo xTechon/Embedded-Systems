@@ -201,11 +201,21 @@ public:
     deciderFunction = f;
   }
 
+  // sink mode, will only consume and not output
+  Transition(Node* in, function<Token*(Token*)> f) {
+    nInput          = in;
+    nOutput         = nullptr;
+    input1          = nullptr;
+    output1         = nullptr;
+    deciderFunction = f;
+  }
+
   void moveTokens() {
     // check if an output is ready and the transition can operate
     if ((output1 != nullptr) && (canOperate == true)) {
+
       // put the output token to the output node
-      nOutput->pushToken(output1);
+      if (nOutput != nullptr) nOutput->pushToken(output1);
 
       // remove the input token from the input node
       input1 = nInput->popToken();
@@ -278,7 +288,7 @@ string printTokenArray(Token** arry, int length) {
     output.append(arry[i]->printToken());
 
     // skip the comma if at last member
-    if (i + 1 == length ) break;
+    if (i + 1 == length) break;
     output.append(",");
   } // END FOR LOOP
   return output;
@@ -315,7 +325,7 @@ void printCycle(int stepNumber) {
   output.append("RGF:");
   output.append(printTokenArray(RGF, REG_FILE_SIZE));
   output.append("\n");
-  
+
   output.append("DAM:");
   output.append(printTokenArray(DAM, DAM_SIZE));
   output.append("\n");
