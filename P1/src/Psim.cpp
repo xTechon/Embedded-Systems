@@ -1,4 +1,5 @@
 #include <deque>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <ostream>
@@ -342,6 +343,25 @@ void printCycle(int stepNumber) {
   fileOutput.push_back(output);
 }
 
+// parse the input files
+void parseInstructionFile(string filePath) {
+  // parses the instruction file and for ever line,
+  // creates OpTokens,
+  // Then, places the tokens on the insturction queue
+  ifstream file(filePath);
+  string line;
+  
+  while (file){
+    getline(file, line);
+  }
+  
+  file.close();
+  return;
+}
+
+void parseRegisterFile(string filePath);
+void parseDataMemoryFile(string filePath);
+
 // #endregion
 
 // takes a REG token as input and outputs an OP token
@@ -631,28 +651,28 @@ void initHardware() {
 // #beginregion --- Simulator Function ---
 
 void Simulator() {
-  
-  int step = 1;
+
+  int step           = 1;
   // --- PHASE 1 ---
   // run all the transitions
-  auto transIt = transitions.begin();
+  auto transIt       = transitions.begin();
   bool transHasMoved = false;
-  
+
   // itterate over transitions until no transitions have acted
   do {
     // reset state
     transHasMoved = false;
-    transIt = transitions.begin();
+    transIt       = transitions.begin();
 
     while (transIt != transitions.end()) {
       // trigger the transition's compute function check the result
       transHasMoved = (*transIt)->compute();
       transIt++;
     }
-    
+
     // keep itterating if any function has moved
-  }while (transHasMoved == true);
-  
+  } while (transHasMoved == true);
+
   // --- PHASE 2 ---
   // Commit the node changes
   auto nodeIt = outputNodes.begin();
@@ -662,7 +682,7 @@ void Simulator() {
     (*nodeIt)->commit();
     nodeIt++;
   }
-  
+
   // --- PHASE 3 ---
   // Run the print cycle
   printCycle(step);
