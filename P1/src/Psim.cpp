@@ -276,8 +276,8 @@ public:
 deque<Node*> inputNodes;       // dynamic itterable queue of all input nodes
 deque<Node*> outputNodes;      // dynamic itterable queue of all output nodes
 Node INM("INM");               // instruction memory
-Token* RGF[REG_FILE_SIZE];     // Register File
-Token* DAM[DAM_SIZE];          // Data Memory
+REGToken* RGF[REG_FILE_SIZE];  // Register File
+DAMToken* DAM[DAM_SIZE];       // Data Memory
 deque<Transition> transitions; // dynamic itterable of all transitions
 
 // #endregion
@@ -316,7 +316,7 @@ void printCycle(int stepNumber) {
   while (it != inputNodes.end()) {
 
     // concat all the input nodes as a string
-    output.append(it->printTokenQueue());
+    output.append((*it)->printTokenQueue());
     output.append("\n");
 
     // continue to next value
@@ -325,11 +325,11 @@ void printCycle(int stepNumber) {
 
   // Add the RGF and DAM
   output.append("RGF:");
-  output.append(printTokenArray(RGF, REG_FILE_SIZE));
+  output.append(printTokenArray((Token**) RGF, REG_FILE_SIZE));
   output.append("\n");
 
   output.append("DAM:");
-  output.append(printTokenArray(DAM, DAM_SIZE));
+  output.append(printTokenArray((Token**) DAM, DAM_SIZE));
   output.append("\n");
 
   // push onto the fileOutput queue
@@ -413,7 +413,26 @@ int main(int argc, char* argv[]) {
 // if the function is able to process the token, it will return a pointer to an output token
 // if the function cannot proccess a token, it will return a nullptr
 
-Token* ReadAndDecode(Token* input) { return nullptr; }
+Token* ReadAndDecode(Token* in) {
+  // input token will be from the INM as an OpToken
+  OpToken* input = dynamic_cast<OpToken*>(in);
+
+  // get the operands from the token
+  int source1 = input->getSrc1();
+  int source2 = input->getSrc2();
+
+  // check if the operands from RGF are available
+  bool src1Avail = (RGF[source1] != nullptr);
+  bool src2Avail = (RGF[source2] != nullptr);
+  bool RGFAvail  = (src1Avail && src2Avail);
+
+  // exit if the RGF is not available
+  if (!RGFAvail) return nullptr;
+
+  // get the values from RGF
+  // int val1 =
+  return nullptr;
+}
 
 // #endregion
 
