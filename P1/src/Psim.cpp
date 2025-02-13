@@ -538,10 +538,20 @@ Token* Loader(Token* in) {
 
   // return the output token
   return output;
-}
+} // END Loader()
 
 // takes a REGToken and writes it to the RGF
-Token* Writer(Token* in) { }
+Token* Writer(Token* in) {
+  // Expects a REG token as input from REB
+  REGToken* input = dynamic_cast<REGToken*>(in);
+
+  // set the RGF index to the input pointer
+  RGF[input->getReg()] = input;
+
+  // does not need to return anything other than an nullptr
+  // as this function is for a sink
+  return nullptr;
+} // END Writer()
 
 // #endregion
 
