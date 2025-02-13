@@ -111,14 +111,22 @@ class Node {
 private:
   deque<Token*> tokenQueue;
   Node* input;
-  string name = "unnamed";
+  string name = "output node";
 
 public:
+  // input nodes need a name for displaying
   Node(string n) {
     input = nullptr;
     name  = n;
   }
 
+  // output nodes do not need a name (and it's annoying to list them)
+  Node(Node* in) {
+    input = in;
+    // name  = n;
+  }
+
+  // to prevent errors from tests
   Node(string n, Node* in) {
     input = in;
     name  = n;
@@ -223,7 +231,8 @@ public:
       // remove the input token
       // free(input1);
       // delete input1; //WARN: There will probably be memory leaks from this
-      // Can't be bothered to make a class deconstructor for all the tokens on a time crunch
+      // Can't be bothered to make a class deconstructor
+      // for all the tokens on a time crunch
       input1 = nullptr;
 
       // remove the reference to the output token
@@ -264,8 +273,8 @@ public:
 
 // #beginregion --- Global Class Variables ---
 
-deque<Node> inputNodes;        // dynamic itterable queue of all input nodes
-deque<Node> outputNodes;       // dynamic itterable queue of all output nodes
+deque<Node*> inputNodes;        // dynamic itterable queue of all input nodes
+deque<Node*> outputNodes;       // dynamic itterable queue of all output nodes
 Token* INM[INSTR_MEM_SIZE];    // instruction memory
 Token* RGF[REG_FILE_SIZE];     // Register File
 Token* DAM[DAM_SIZE];          // Data Memory
@@ -403,3 +412,42 @@ int main(int argc, char* argv[]) {
 
   return 0;
 }
+
+// #beginregion --- Class Initialization functions ---
+
+void initHardware() {
+  // --- init Nodes ---
+  static Node INBin("INB");
+  static Node INBout(&INBin);
+
+  static Node AIBin("AIB");
+  static Node AIBout(&AIBin);
+
+  static Node LIBin("LIB");
+  static Node LIBout(&LIBin);
+
+  static Node ADBin("ADB");
+  static Node ADBout(&ADBin);
+
+  static Node REBin("REB");
+  static Node REBout(&REBin);
+  
+  // add nodes to input queue
+  inputNodes.push_back(&INBin);
+  inputNodes.push_back(&AIBin);
+  inputNodes.push_back(&LIBin);
+  inputNodes.push_back(&ADBin);
+  inputNodes.push_back(&REBin);
+  
+  // add nodes output queue
+  outputNodes.push_back(&INBout);
+  outputNodes.push_back(&AIBout);
+  outputNodes.push_back(&LIBout);
+  outputNodes.push_back(&ADBout);
+  outputNodes.push_back(&REBin);
+  
+  // init transitions
+
+}
+
+// #endregion
