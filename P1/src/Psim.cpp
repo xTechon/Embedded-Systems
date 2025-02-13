@@ -279,12 +279,12 @@ public:
 
 // #beginregion --- Global Class Variables ---
 
-deque<Node*> inputNodes;       // dynamic itterable queue of all input nodes
-deque<Node*> outputNodes;      // dynamic itterable queue of all output nodes
-Node INM("INM");               // instruction memory
-REGToken* RGF[REG_FILE_SIZE];  // Register File
-DAMToken* DAM[DAM_SIZE];       // Data Memory
-deque<Transition> transitions; // dynamic itterable of all transitions
+deque<Node*> inputNodes;        // dynamic itterable queue of all input nodes
+deque<Node*> outputNodes;       // dynamic itterable queue of all output nodes
+Node INM("INM");                // instruction memory
+REGToken* RGF[REG_FILE_SIZE];   // Register File
+DAMToken* DAM[DAM_SIZE];        // Data Memory
+deque<Transition*> transitions; // dynamic itterable of all transitions
 
 // #endregion
 
@@ -593,23 +593,37 @@ void initHardware() {
   outputNodes.push_back(&ADBout);
   outputNodes.push_back(&REBin);
 
-  // init transitions
+  // --- init transitions ---
   // INM --> Decoder --> INBout
-  Transition decdoder(&INM, &INBout, &ReadAndDecode);
+  static Transition decdoder(&INM, &INBout, &ReadAndDecode);
 
   // INBin --> Issue1 --> AIBout
-  Transition issuer1(&INBin, &AIBout, &Issue1);
+  static Transition issuer1(&INBin, &AIBout, &Issue1);
 
   // INBin --> Issue2 --> LIBout
-  Transition issuer2(&INBin, &LIBout, &Issue2);
+  static Transition issuer2(&INBin, &LIBout, &Issue2);
 
   // LIBin --> ADDR --> ADBout
-  Transition addr(&LIBin, &ADBout, &LogicUnit);
+  static Transition addr(&LIBin, &ADBout, &LogicUnit);
 
   // AIBin --> ALU --> REBout
-  Transition alu(&AIBin, &REBout, &LogicUnit);
+  static Transition alu(&AIBin, &REBout, &LogicUnit);
 
   // ADBin --> LOAD --> REBout
+  static Transition load(&ADBin, &REBout, &Loader);
+
+  // REBin --> WRITE --> sink
+  static Transition write(&REBin, &Writer);
+
+  // put transitions on global queue
+
+  transitions.push_back(&decdoder);
+  transitions.push_back(&issuer1);
+  transitions.push_back(&issuer2);
+  transitions.push_back(&addr);
+  transitions.push_back(&alu);
+  transitions.push_back(&load);
+  transitions.push_back(&write);
 }
 
 // #endregion
