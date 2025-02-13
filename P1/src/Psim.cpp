@@ -47,6 +47,7 @@ public:
   int getVal() { return place2; }
 }; // END CLASS
 
+// format <Reg name, val>
 class REGToken : public virtual Token {
 public:
   REGToken(int reg, int val) {
@@ -444,7 +445,7 @@ Token* ReadAndDecode(Token* in) {
 } // END ReadAndDecode()
 
 // checks the LitOpToken from the INB
-// returns the same token if it's not a LD instr
+// returns the same token to the AIB if it's not a LD instr
 Token* Issue1(Token* in) {
   // input token will be from the INB as a LitOpToken
   LitOpToken* input = dynamic_cast<LitOpToken*>(in);
@@ -460,7 +461,7 @@ Token* Issue1(Token* in) {
 } // END Issue1()
 
 // checks the LitOpToken from the INB
-// returns the same token if it is a LD instr
+// returns the same token to the LIB if it is a LD instr
 Token* Issue2(Token* in) {
   // input token will be from the INB as a LitOpToken
   LitOpToken* input = dynamic_cast<LitOpToken*>(in);
@@ -474,6 +475,53 @@ Token* Issue2(Token* in) {
   // move the input otherwise
   else return nullptr;
 } // END Issue2()
+
+// helper for the string switch case
+enum class StringCode { ADD, SUB, AND, OR, LD, UNKOWN };
+
+// turn the strings into something useable for a switch case statment
+StringCode hashString(const string& str) {
+  if (str == string("ADD")) return StringCode::ADD;
+  if (str == string("SUB")) return StringCode::SUB;
+  if (str == string("AND")) return StringCode::AND;
+  if (str == string("OR")) return StringCode::OR;
+  if (str == string("LD")) return StringCode::LD;
+  return StringCode::UNKOWN;
+}
+
+// used for both the ALU and ADDR
+// takes a LitOpToken and turns
+// it into a REGToken
+Token* LogicUnit(Token* in) {
+  // input token will be from the AIB as a LitOpToken
+  LitOpToken* input = dynamic_cast<LitOpToken*>(in);
+  int arg1          = input->getSrc1();
+  int arg2          = input->getSrc2();
+  int result        = 0;
+  
+  switch (hashString(input->getOpcode())) {
+  // ALU cases
+  case StringCode::ADD:
+    result = arg1 + arg2;
+    return new REGToken(input->getDest(), result);
+  case StringCode::SUB:
+    result = arg1 - arg2;
+    return new REGToken(input->getDest(), result);
+  case StringCode::AND:
+    result = arg1 && arg2;
+    return new REGToken(input->getDest(), result);
+  case StringCode::OR:
+    result = arg1 || arg2;
+    return new REGToken(input->getDest(), result);
+  case StringCode::LD: // ADDR case
+    result = arg1 + arg2;
+    return new REGToken(input->getDest(), result);
+  case StringCode::UNKOWN: // exception handling
+    return nullptr;
+  }
+
+  return nullptr;
+} // END LogicUnit()
 
 // #endregion
 
