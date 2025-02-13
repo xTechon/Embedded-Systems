@@ -15,6 +15,9 @@ string RegistersPath    = "registers.txt";
 string DataMemoryPath   = "datamemory.txt";
 string OutputFilePath   = "simulation.txt";
 deque<string> fileOutput; // contains the cycles for the file output
+const int INSTR_MEM_SIZE = 16;
+const int REG_FILE_SIZE  = 8;
+const int DAM_SIZE       = 8;
 
 // #endregion
 
@@ -249,14 +252,77 @@ public:
 
 // #endregion
 
-// #beginregion -- Global Class Variables ---
+// #beginregion --- Global Class Variables ---
 
 deque<Node> inputNodes;        // dynamic itterable queue of all input nodes
 deque<Node> outputNodes;       // dynamic itterable queue of all output nodes
-Token* INM[16];                // instruction memory
-Token* RGF[8];                 // Register File
-Token* DAM[8];                 // Data Memory
+Token* INM[INSTR_MEM_SIZE];    // instruction memory
+Token* RGF[REG_FILE_SIZE];     // Register File
+Token* DAM[DAM_SIZE];          // Data Memory
 deque<Transition> transitions; // dynamic itterable of all transitions
+
+// #endregion
+
+// #beginregion --- Global Function Declarations ---
+
+// itterate over a generic array of tokens
+string printTokenArray(Token** arry, int length) {
+  string output;
+  // itterate over array
+  for (int i = 0; i < length; i++) {
+
+    // skip if array spot is empty
+    if (arry[i] == nullptr) continue;
+
+    // add token output
+    output.append(arry[i]->printToken());
+
+    // skip the comma if at last member
+    if (i + 1 == length ) break;
+    output.append(",");
+  } // END FOR LOOP
+  return output;
+}
+
+// append the current cycle to the fileOutput queue
+void printCycle(int stepNumber) {
+
+  // cycle header
+  string output = "STEP" + to_string(stepNumber) + ":\n";
+
+  // put the INM first
+  output.append("INM:");
+
+  // itterate over the INM
+  output.append(printTokenArray(INM, INSTR_MEM_SIZE));
+  output.append("\n");
+
+  // node itterator
+  auto it = inputNodes.begin();
+
+  // itterate over input nodes
+  while (it != inputNodes.end()) {
+
+    // concat all the input nodes as a string
+    output.append(it->printTokenQueue());
+    output.append("\n");
+
+    // continue to next value
+    it++;
+  }
+
+  // Add the RGF and DAM
+  output.append("RGF:");
+  output.append(printTokenArray(RGF, REG_FILE_SIZE));
+  output.append("\n");
+  
+  output.append("DAM:");
+  output.append(printTokenArray(DAM, DAM_SIZE));
+  output.append("\n");
+
+  // push onto the fileOutput queue
+  fileOutput.push_back(output);
+}
 
 // #endregion
 
