@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <deque>
 #include <functional>
 #include <iostream>
@@ -413,6 +414,8 @@ int main(int argc, char* argv[]) {
 // if the function is able to process the token, it will return a pointer to an output token
 // if the function cannot proccess a token, it will return a nullptr
 
+// takes a OpToken from INM, checks the RGF, and
+// returns a LitOpToken with the resolved values
 Token* ReadAndDecode(Token* in) {
   // input token will be from the INM as an OpToken
   OpToken* input = dynamic_cast<OpToken*>(in);
@@ -430,7 +433,17 @@ Token* ReadAndDecode(Token* in) {
   if (!RGFAvail) return nullptr;
 
   // get the values from RGF
-  // int val1 =
+  int val1 = RGF[source1]->getVal();
+  int val2 = RGF[source2]->getVal();
+  
+  // create the output token
+  LitOpToken* output = new LitOpToken(input->getOpcode(), input->getDest(), val1, val2);
+  
+  // return the pointer to the output token
+  return output;
+}
+
+Token* Issue1(Token* in) {
   return nullptr;
 }
 
