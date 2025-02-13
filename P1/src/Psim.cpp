@@ -627,3 +627,46 @@ void initHardware() {
 }
 
 // #endregion
+
+// #beginregion --- Simulator Function ---
+
+void Simulator() {
+  
+  int step = 1;
+  // --- PHASE 1 ---
+  // run all the transitions
+  auto transIt = transitions.begin();
+  bool transHasMoved = false;
+  
+  // itterate over transitions until no transitions have acted
+  do {
+    // reset state
+    transHasMoved = false;
+    transIt = transitions.begin();
+
+    while (transIt != transitions.end()) {
+      // trigger the transition's compute function check the result
+      transHasMoved = (*transIt)->compute();
+      transIt++;
+    }
+    
+    // keep itterating if any function has moved
+  }while (transHasMoved == true);
+  
+  // --- PHASE 2 ---
+  // Commit the node changes
+  auto nodeIt = outputNodes.begin();
+  while (nodeIt != outputNodes.end()) {
+    // will take the entire queue from an output node
+    // and place it into the queue for an input node
+    (*nodeIt)->commit();
+    nodeIt++;
+  }
+  
+  // --- PHASE 3 ---
+  // Run the print cycle
+  printCycle(step);
+  return;
+}
+
+// #endregion
