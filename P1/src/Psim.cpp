@@ -1,4 +1,3 @@
-#include <cstddef>
 #include <deque>
 #include <functional>
 #include <iostream>
@@ -262,7 +261,8 @@ public:
     setOutputToken(deciderFunction(input1));
 
     // skip running output if there was no output token
-    if (output1 == nullptr) { return false; }
+    // and if the transition is not a sink
+    if ((output1 == nullptr) && (nOutput != nullptr)) { return false; }
 
     // trigger move tokens if an output token was found
     moveTokens();
@@ -493,12 +493,12 @@ StringCode hashString(const string& str) {
 // takes a LitOpToken and turns
 // it into a REGToken
 Token* LogicUnit(Token* in) {
-  // input token will be from the AIB as a LitOpToken
+  // input token will be from the AIB or LIB as a LitOpToken
   LitOpToken* input = dynamic_cast<LitOpToken*>(in);
   int arg1          = input->getSrc1();
   int arg2          = input->getSrc2();
   int result        = 0;
-  
+
   switch (hashString(input->getOpcode())) {
   // ALU cases
   case StringCode::ADD:
@@ -522,6 +522,26 @@ Token* LogicUnit(Token* in) {
 
   return nullptr;
 } // END LogicUnit()
+
+// takes a REGToken from the ADB and returns
+// a REGToken with the resolved memory value
+// from the DAM
+Token* Loader(Token* in) {
+  // Expects a REGToken as input from ADB
+  REGToken* input = dynamic_cast<REGToken*>(in);
+
+  // gets the data from the index in memory
+  int result = DAM[input->getVal()]->getVal();
+
+  // create a new token with the result
+  REGToken* output = new REGToken(input->getReg(), result);
+
+  // return the output token
+  return output;
+}
+
+// takes a REGToken and writes it to the RGF
+Token* Writer(Token* in) { }
 
 // #endregion
 
