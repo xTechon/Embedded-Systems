@@ -176,10 +176,14 @@ public:
   // push the top of the queue to the input queue
   // as long as the queue is not empty
   void commit() {
-    if (!(this->tokenQueue.empty()) && (input != nullptr)) {
-      // Token* temp = this->tokenQueue.front();
-      input->pushToken(this->popToken());
-      // this->tokenQueue.pop_front(); // remove element from this queue
+    // make sure there is an input to push to
+    if (input != nullptr) {
+      // flush everything from this output node
+      while (!(this->tokenQueue.empty())) {
+
+        // remove an element from this queue
+        input->pushToken(this->popToken());
+      }
     }
   }
 };
@@ -590,6 +594,22 @@ void initHardware() {
   outputNodes.push_back(&REBin);
 
   // init transitions
+  // INM --> Decoder --> INBout
+  Transition decdoder(&INM, &INBout, &ReadAndDecode);
+
+  // INBin --> Issue1 --> AIBout
+  Transition issuer1(&INBin, &AIBout, &Issue1);
+
+  // INBin --> Issue2 --> LIBout
+  Transition issuer2(&INBin, &LIBout, &Issue2);
+
+  // LIBin --> ADDR --> ADBout
+  Transition addr(&LIBin, &ADBout, &LogicUnit);
+
+  // AIBin --> ALU --> REBout
+  Transition alu(&AIBin, &REBout, &LogicUnit);
+
+  // ADBin --> LOAD --> REBout
 }
 
 // #endregion
