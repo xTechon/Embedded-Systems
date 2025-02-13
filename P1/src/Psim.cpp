@@ -62,7 +62,7 @@ public:
 };
 
 // format <OPCODE, Dest Reg, Src Reg, Src Reg>
-class opToken : public virtual Token {
+class OpToken : public virtual Token {
 protected:
   // inherited place1+2 are used as source1, source2
   int destination;
@@ -73,7 +73,7 @@ public:
     return begining + opcode + ",R" + to_string(destination) + ",R" + to_string(place1) + ",R" + to_string(place2) + ">";
   }
 
-  opToken(string op, int dest, int src1, int src2) {
+  OpToken(string op, int dest, int src1, int src2) {
     opcode      = op;
     destination = dest;
     place1      = src1;
@@ -90,14 +90,14 @@ public:
 }; // END CLASS
 
 // format <OPCODE, Dest Reg, VALUE, VALUE>
-class litOpToken : opToken, public virtual Token {
+class LitOpToken : OpToken, public virtual Token {
 public:
   string printToken() override {
     return begining + opcode + "R" + to_string(destination) + "," + to_string(place1) + "," + to_string(place2) + ">";
   }
 
-  litOpToken(string op, int dest, int src1, int src2)
-      : opToken {op, dest, src1, src2} { }
+  LitOpToken(string op, int dest, int src1, int src2)
+      : OpToken {op, dest, src1, src2} { }
 }; // END CLASS
 
 // #endregion
@@ -273,9 +273,9 @@ public:
 
 // #beginregion --- Global Class Variables ---
 
-deque<Node*> inputNodes;        // dynamic itterable queue of all input nodes
-deque<Node*> outputNodes;       // dynamic itterable queue of all output nodes
-Token* INM[INSTR_MEM_SIZE];    // instruction memory
+deque<Node*> inputNodes;       // dynamic itterable queue of all input nodes
+deque<Node*> outputNodes;      // dynamic itterable queue of all output nodes
+Node INM("INM");               // instruction memory
 Token* RGF[REG_FILE_SIZE];     // Register File
 Token* DAM[DAM_SIZE];          // Data Memory
 deque<Transition> transitions; // dynamic itterable of all transitions
@@ -308,13 +308,6 @@ void printCycle(int stepNumber) {
 
   // cycle header
   string output = "STEP" + to_string(stepNumber) + ":\n";
-
-  // put the INM first
-  output.append("INM:");
-
-  // itterate over the INM
-  output.append(printTokenArray(INM, INSTR_MEM_SIZE));
-  output.append("\n");
 
   // node itterator
   auto it = inputNodes.begin();
@@ -351,7 +344,7 @@ Token* computationTest(Token* DAMTokenInput) {
   REGToken* temp = dynamic_cast<REGToken*>(DAMTokenInput);
 
   // create a new token as an example (conversion)
-  static opToken output("MULT", temp->getReg(), temp->getVal(), 1);
+  static OpToken output("MULT", temp->getReg(), temp->getVal(), 1);
 
   // up-cast from specific token to generic token
   return dynamic_cast<Token*>(&output);
@@ -377,8 +370,8 @@ int main(int argc, char* argv[]) {
   // example usage of inheritance
   DAMToken example(5, 10);
   REGToken example1(5, 10);
-  opToken example2(string("ADD"), 3, 3, 2);
-  litOpToken example3(string("ADD"), 3, 3, 2);
+  OpToken example2(string("ADD"), 3, 3, 2);
+  LitOpToken example3(string("ADD"), 3, 3, 2);
 
   // cout << printToken(&example) << endl;
   // cout << printToken(&example1) << endl;
@@ -413,6 +406,17 @@ int main(int argc, char* argv[]) {
   return 0;
 }
 
+// #beginregion --- Transition computational functions ---
+// these functions will be given to different transitions as objects
+// each function will take a generic token expecting to be able
+// to convert the token to a type of useable token
+// if the function is able to process the token, it will return a pointer to an output token
+// if the function cannot proccess a token, it will return a nullptr
+
+Token* ReadAndDecode(Token* input) { return nullptr; }
+
+// #endregion
+
 // #beginregion --- Class Initialization functions ---
 
 void initHardware() {
@@ -431,23 +435,23 @@ void initHardware() {
 
   static Node REBin("REB");
   static Node REBout(&REBin);
-  
+
   // add nodes to input queue
+  inputNodes.push_back(&INM); // global instruction queue
   inputNodes.push_back(&INBin);
   inputNodes.push_back(&AIBin);
   inputNodes.push_back(&LIBin);
   inputNodes.push_back(&ADBin);
   inputNodes.push_back(&REBin);
-  
+
   // add nodes output queue
   outputNodes.push_back(&INBout);
   outputNodes.push_back(&AIBout);
   outputNodes.push_back(&LIBout);
   outputNodes.push_back(&ADBout);
   outputNodes.push_back(&REBin);
-  
-  // init transitions
 
+  // init transitions
 }
 
 // #endregion
