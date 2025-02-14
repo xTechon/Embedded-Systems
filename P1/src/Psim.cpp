@@ -346,6 +346,7 @@ void printCycle(int stepNumber) {
   fileOutput.push_back(output);
 }
 
+// generic token parsers as a helper function for the more specifc token generators
 vector<vector<string>> parser(string filePath, string delimiterRegex) {
 
   // open the file
@@ -359,12 +360,8 @@ vector<vector<string>> parser(string filePath, string delimiterRegex) {
 
   vector<vector<string>> output; // output variable
 
-  cout << "parse test" << endl;
-
   // itterate over the file
   while (fItterator != fEnd) {
-
-    cout << "File line:" << *fItterator << endl;
 
     // split the line of the file by the regex delimiter
     sregex_token_iterator it((*fItterator).begin(), (*fItterator).end(), del, -1);
@@ -375,8 +372,8 @@ vector<vector<string>> parser(string filePath, string delimiterRegex) {
 
     // itterate over the line of the file
     while (it != end) {
-      cout << *it << endl;
 
+      // make sure to remove any empty strings
       if (*it != "") {
         // Add the block to the output vector
         parsedToken.push_back(*it);
@@ -499,13 +496,6 @@ int main(int argc, char* argv[]) {
   REGToken example1(5, 10);
   OpToken example2(string("ADD"), 3, 3, 2);
   LitOpToken example3(string("ADD"), 3, 3, 2);
-
-  // cout << printToken(&example) << endl;
-  // cout << printToken(&example1) << endl;
-  // cout << printToken(&example2) << endl;
-  // cout << printToken(&example3) << endl;
-
-  // cout << "node test" << endl;
 
   Node Ainput("A Input");            // creat an input node
   Node Aoutput("A output", &Ainput); // put the input at the output node
