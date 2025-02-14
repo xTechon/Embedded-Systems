@@ -25,6 +25,46 @@ const int DAM_SIZE       = 8;
 
 // #endregion
 
+// #beginregion --- Main Function Inits ---
+
+void initHardware();
+void Simulator();
+void parseInstructionFile(string, string);
+void parseRegisterFile(string, string);
+void parseDataMemoryFile(string, string);
+string printCycle(int);
+
+// #endregion
+
+// argc is # of arguments including program execution
+// argv is the array of strings of every argument including execution
+int main(int argc, char* argv[]) {
+  cout << "Hello World!" << endl;
+
+  // change path locations if arguments set
+  if (argc >= 4) {
+    InstructionsPath = argv[1];
+    RegistersPath    = argv[2];
+    DataMemoryPath   = argv[3];
+  }
+  // optionally override output filepath if set
+  if (argc == 5) { OutputFilePath = argv[4]; }
+
+  // load data from the files
+  parseInstructionFile(InstructionsPath, "[<>]|(,R)");
+  parseRegisterFile(RegistersPath, "(<R)|,|>");
+  parseDataMemoryFile(DataMemoryPath, "[<>]|,");
+
+  // initalize the hardware
+  initHardware();
+
+  cout << printCycle(0) << endl;
+
+  // run the simulation
+  Simulator();
+  return 0;
+}
+
 // #beginregion --- Token Class Dclarations ---
 
 // default format <int, int>
@@ -468,80 +508,6 @@ void parseDataMemoryFile(string filePath, string delimiterRegex) {
 
 // #endregion
 
-// takes a REG token as input and outputs an OP token
-Token* computationTest(Token* DAMTokenInput) {
-  // downcast from the base class to the member class
-  REGToken* temp = dynamic_cast<REGToken*>(DAMTokenInput);
-
-  // create a new token as an example (conversion)
-  static OpToken output("MULT", temp->getReg(), temp->getVal(), 1);
-
-  // up-cast from specific token to generic token
-  return dynamic_cast<Token*>(&output);
-}
-
-// example usage of inheritance
-string printToken(Token* foo) { return foo->printToken(); }
-
-void initHardware();
-void Simulator();
-
-// argc is # of arguments including program execution
-// argv is the array of strings of every argument including execution
-int main(int argc, char* argv[]) {
-  cout << "Hello World!" << endl;
-
-  // change path locations if arguments set
-  if (argc >= 4) {
-    InstructionsPath = argv[1];
-    RegistersPath    = argv[2];
-    DataMemoryPath   = argv[3];
-  }
-  // optionally override output filepath if set
-  if (argc == 5) { OutputFilePath = argv[4]; }
-
-  // example usage of inheritance
-  DAMToken example(5, 10);
-  REGToken example1(5, 10);
-  OpToken example2(string("ADD"), 3, 3, 2);
-  LitOpToken example3(string("ADD"), 3, 3, 2);
-
-  Node Ainput("A Input");            // creat an input node
-  Node Aoutput("A output", &Ainput); // put the input at the output node
-  Aoutput.pushToken(&example1);
-  Aoutput.pushToken(&example2);
-  cout << Aoutput.printTokenQueue() << endl; // Aoutput --> Ainput
-
-  cout << "commit top data" << endl;
-  Aoutput.commit(); // move data
-  cout << Ainput.printTokenQueue() << endl;
-  cout << Aoutput.printTokenQueue() << endl;
-
-  // transition test
-  cout << "transfer via transition" << endl;
-  // create a transition of Ainput --> transition --> Aoutput
-  Transition exampleT(&Ainput, &Aoutput, &computationTest);
-
-  // trigger the transition
-  exampleT.compute();
-
-  // display in terminal
-  cout << Ainput.printTokenQueue() << endl;
-  cout << Aoutput.printTokenQueue() << endl;
-
-  parseInstructionFile(InstructionsPath, "[<>]|(,R)");
-  parseRegisterFile(RegistersPath, "(<R)|,|>");
-  parseDataMemoryFile(DataMemoryPath, "[<>]|,");
-
-  initHardware();
-
-  cout << printCycle(0) << endl;
-
-  Simulator();
-  cout << "done" << endl;
-  return 0;
-}
-
 // #beginregion --- Transition computational functions ---
 // these functions will be given to different transitions as objects
 // each function will take a generic token expecting to be able
@@ -778,7 +744,7 @@ bool isFinished() {
 }
 
 // reset all transitions
-void resetTransitions(){
+void resetTransitions() {
   for (auto transition : transitions) {
     transition->reset();
   }
@@ -786,7 +752,7 @@ void resetTransitions(){
 
 void Simulator() {
 
-  int step = 1;
+  int step      = 1;
   bool finished = false;
   do {
     // --- PHASE 1 ---
