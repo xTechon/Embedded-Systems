@@ -18,14 +18,14 @@ string InstructionsPath = "instructions.txt";
 string RegistersPath    = "registers.txt";
 string DataMemoryPath   = "datamemory.txt";
 string OutputFilePath   = "simulation.txt";
-deque<string> fileOutput; // contains the cycles for the file output
+vector<string> fileOutput; // contains the cycles for the file output
 const int INSTR_MEM_SIZE = 16;
 const int REG_FILE_SIZE  = 8;
 const int DAM_SIZE       = 8;
 
 // #endregion
 
-// #beginregion --- Main Function Inits ---
+// #beginregion --- Main Function Declarations ---
 
 void initHardware();
 void Simulator();
@@ -33,6 +33,7 @@ void parseInstructionFile(string, string);
 void parseRegisterFile(string, string);
 void parseDataMemoryFile(string, string);
 string printCycle(int);
+void outputFile(string);
 
 // #endregion
 
@@ -62,6 +63,10 @@ int main(int argc, char* argv[]) {
 
   // run the simulation
   Simulator();
+  
+  // output the file
+  outputFile(OutputFilePath);
+
   return 0;
 }
 
@@ -503,6 +508,20 @@ void parseDataMemoryFile(string filePath, string delimiterRegex) {
     DAM[damLoc] = output;
   }
 
+  return;
+}
+
+void outputFile(string filePath) {
+
+  ofstream outFile;
+  outFile.open(filePath);
+  
+  for (auto item : fileOutput) {
+    // print to file
+    outFile << item << "\n";
+  }
+  
+  outFile.close();
   return;
 }
 

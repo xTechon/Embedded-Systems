@@ -31,3 +31,4 @@
 *.out
 *.app
 P1/bin/Psim
+P1/Sample_output/simulation.txt
