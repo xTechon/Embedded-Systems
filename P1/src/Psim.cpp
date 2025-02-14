@@ -1,4 +1,3 @@
-#include <cstddef>
 #include <deque>
 #include <fstream>
 #include <functional>
@@ -347,7 +346,7 @@ void printCycle(int stepNumber) {
   fileOutput.push_back(output);
 }
 
-vector<string> parser(string filePath, string delimiterRegex) {
+vector<vector<string>> parser(string filePath, string delimiterRegex) {
 
   // open the file
   ifstream file(filePath);
@@ -358,7 +357,7 @@ vector<string> parser(string filePath, string delimiterRegex) {
   istream_iterator<string> fItterator(file);
   istream_iterator<string> fEnd;
 
-  vector<string> output; // output variable
+  vector<vector<string>> output; // output variable
 
   cout << "parse test" << endl;
 
@@ -371,14 +370,23 @@ vector<string> parser(string filePath, string delimiterRegex) {
     sregex_token_iterator it((*fItterator).begin(), (*fItterator).end(), del, -1);
     sregex_token_iterator end;
 
+    // make vector to contain token
+    vector<string> parsedToken;
+
     // itterate over the line of the file
     while (it != end) {
       cout << *it << endl;
 
-      // Add the block to the output vector
-      output.push_back(*it);
+      if (*it != "") {
+        // Add the block to the output vector
+        parsedToken.push_back(*it);
+      }
+
       ++it;
     } // END While
+
+    // add the token to the output
+    output.push_back(parsedToken);
     ++fItterator;
   } // END While
 
@@ -395,15 +403,22 @@ void parseInstructionFile(string filePath, string delimiterRegex) {
   // Then, places the tokens on the insturction queue
 
   // get the output string from the parser
-  vector<string> baseToken = parser(filePath, delimiterRegex);
-  string opcode            = baseToken[0];
-  int dest                 = stoi(baseToken[1]);
-  int src1                 = stoi(baseToken[2]);
-  int src2                 = stoi(baseToken[3]);
+  vector<vector<string>> parsedTokens = parser(filePath, delimiterRegex);
 
-  OpToken output(opcode, dest, src1, src2);
+  // itterate over the list of parsedTokens
+  for (auto baseToken : parsedTokens) {
+    // define the variables
+    string opcode = baseToken[0];
+    int dest      = stoi(baseToken[1]);
+    int src1      = stoi(baseToken[2]);
+    int src2      = stoi(baseToken[3]);
 
-  // TODO push token to queue
+    // generate a new token for the INM
+    OpToken* output = new OpToken(opcode, dest, src1, src2);
+
+    // put the token on the INM
+    INM.pushToken(dynamic_cast<Token*>(output));
+  }
 
   return;
 }
@@ -478,7 +493,7 @@ int main(int argc, char* argv[]) {
   cout << Ainput.printTokenQueue() << endl;
   cout << Aoutput.printTokenQueue() << endl;
 
-  parseInstructionFile(InstructionsPath, "[<>]|(,R)");
+  parseInstructionFile(InstructionsPath, "[<>]|(,R)|\n|(\r\n)");
 
   return 0;
 }

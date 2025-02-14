@@ -63,5 +63,6 @@
 		},
 		"editor.showFoldingControls": "always",
 		"explicitFolding.debug": false,
+		"lldb.launch.expressions": "simple",
 	}
 }
