@@ -98,7 +98,7 @@ public:
 class LitOpToken : public OpToken, public virtual Token {
 public:
   string printToken() override {
-    return begining + opcode + "R" + to_string(destination) + "," + to_string(place1) + "," + to_string(place2) + ">";
+    return begining + opcode + ",R" + to_string(destination) + "," + to_string(place1) + "," + to_string(place2) + ">";
   }
 
   LitOpToken(string op, int dest, int src1, int src2)
@@ -148,7 +148,7 @@ public:
 
   // return the token from the front of the queue and pop it
   Token* popToken() {
-    static Token* temp = this->tokenQueue.front();
+    Token* temp = this->tokenQueue.front();
     this->tokenQueue.pop_front();
     return temp;
   }
@@ -480,6 +480,7 @@ Token* computationTest(Token* DAMTokenInput) {
 string printToken(Token* foo) { return foo->printToken(); }
 
 void initHardware();
+void Simulator();
 
 // argc is # of arguments including program execution
 // argv is the array of strings of every argument including execution
@@ -531,6 +532,8 @@ int main(int argc, char* argv[]) {
   initHardware();
 
   cout << printCycle(0) << endl;
+
+  Simulator();
   cout << "done" << endl;
   return 0;
 }
@@ -687,19 +690,19 @@ Token* Writer(Token* in) {
 void initHardware() {
   // --- init Nodes ---
   static Node INBin("INB");
-  static Node INBout(&INBin);
+  static Node INBout("INB Out", &INBin);
 
   static Node AIBin("AIB");
-  static Node AIBout(&AIBin);
+  static Node AIBout("AIB Out", &AIBin);
 
   static Node LIBin("LIB");
-  static Node LIBout(&LIBin);
+  static Node LIBout("LIB Out", &LIBin);
 
   static Node ADBin("ADB");
-  static Node ADBout(&ADBin);
+  static Node ADBout("ADB Out", &ADBin);
 
   static Node REBin("REB");
-  static Node REBout(&REBin);
+  static Node REBout("REB Out", &REBin);
 
   // add nodes to input queue
   inputNodes.push_back(&INM); // global instruction queue
@@ -788,7 +791,7 @@ void Simulator() {
 
   // --- PHASE 3 ---
   // Run the print cycle
-  printCycle(step);
+  cout << printCycle(step) << endl;
   return;
 }
 
