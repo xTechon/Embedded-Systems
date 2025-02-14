@@ -423,8 +423,45 @@ void parseInstructionFile(string filePath, string delimiterRegex) {
   return;
 }
 
-void parseRegisterFile(string filePath);
-void parseDataMemoryFile(string filePath);
+void parseRegisterFile(string filePath, string delimiterRegex) {
+  // get the output string from the parser
+  vector<vector<string>> parsedTokens = parser(filePath, delimiterRegex);
+
+  // itterate over the list of parsedTokens
+  for (auto baseToken : parsedTokens) {
+    // define the variables
+    int regLoc = stoi(baseToken[0]);
+    int val    = stoi(baseToken[1]);
+
+    // generate a new token for the RGF
+    REGToken* output = new REGToken(regLoc, val);
+
+    // put the token on the RGF
+    RGF[regLoc] = output;
+  }
+
+  return;
+}
+
+void parseDataMemoryFile(string filePath, string delimiterRegex) {
+  // get the output string from the parser
+  vector<vector<string>> parsedTokens = parser(filePath, delimiterRegex);
+
+  // itterate over the list of parsedTokens
+  for (auto baseToken : parsedTokens) {
+    // define the variables
+    int damLoc = stoi(baseToken[0]);
+    int val    = stoi(baseToken[1]);
+
+    // generate a new token for the DAM
+    DAMToken* output = new DAMToken(damLoc, val);
+
+    // put the token on the DAM
+    DAM[damLoc] = output;
+  }
+
+  return;
+}
 
 // #endregion
 
@@ -493,8 +530,11 @@ int main(int argc, char* argv[]) {
   cout << Ainput.printTokenQueue() << endl;
   cout << Aoutput.printTokenQueue() << endl;
 
-  parseInstructionFile(InstructionsPath, "[<>]|(,R)|\n|(\r\n)");
+  parseInstructionFile(InstructionsPath, "[<>]|(,R)");
+  parseRegisterFile(RegistersPath, "(<R)|,|>");
+  parseDataMemoryFile(DataMemoryPath, "[<>]|,");
 
+  cout << "done" << endl;
   return 0;
 }
 
