@@ -38,7 +38,7 @@ public:
 }; // END CLASS
 
 // format <addr, val>
-class DAMToken : public virtual Token {
+class DAMToken : public Token {
 public:
   DAMToken(int addr, int val) {
     place1 = addr;
@@ -314,10 +314,10 @@ string printTokenArray(Token** arry, int length) {
 }
 
 // append the current cycle to the fileOutput queue
-void printCycle(int stepNumber) {
+string printCycle(int stepNumber) {
 
   // cycle header
-  string output = "STEP" + to_string(stepNumber) + ":\n";
+  string output = "STEP " + to_string(stepNumber) + ":\n";
 
   // node itterator
   auto it = inputNodes.begin();
@@ -344,6 +344,8 @@ void printCycle(int stepNumber) {
 
   // push onto the fileOutput queue
   fileOutput.push_back(output);
+
+  return output;
 }
 
 // generic token parsers as a helper function for the more specifc token generators
@@ -477,6 +479,8 @@ Token* computationTest(Token* DAMTokenInput) {
 // example usage of inheritance
 string printToken(Token* foo) { return foo->printToken(); }
 
+void initHardware();
+
 // argc is # of arguments including program execution
 // argv is the array of strings of every argument including execution
 int main(int argc, char* argv[]) {
@@ -524,6 +528,9 @@ int main(int argc, char* argv[]) {
   parseRegisterFile(RegistersPath, "(<R)|,|>");
   parseDataMemoryFile(DataMemoryPath, "[<>]|,");
 
+  initHardware();
+
+  cout << printCycle(0) << endl;
   cout << "done" << endl;
   return 0;
 }
