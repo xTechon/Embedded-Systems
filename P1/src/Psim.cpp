@@ -12,6 +12,11 @@
 // would not use this under normal circumstances
 using namespace std;
 
+// TODO: Step 5 has the order of R4 and R5 Reversed
+// TODO: the function of AND is ambiguous
+// TODO: the function of OR is ambiguous
+// TODO: Extra empty cycle at the end of the simulation
+
 // #beginregion --- Global Variables ---
 
 string InstructionsPath = "instructions.txt";
@@ -274,10 +279,10 @@ public:
 
   void moveTokens() {
     // check if an output is ready and the transition can operate
-    if ((output1 != nullptr) && (canOperate == true)) {
+    if (canOperate == true) {
 
       // put the output token to the output node
-      if (nOutput != nullptr) nOutput->pushToken(output1);
+      if ((output1 != nullptr) && (nOutput != nullptr)) nOutput->pushToken(output1);
 
       // remove the input token from the input node
       input1 = nInput->popToken();
@@ -706,7 +711,7 @@ void initHardware() {
   outputNodes.push_back(&AIBout);
   outputNodes.push_back(&LIBout);
   outputNodes.push_back(&ADBout);
-  outputNodes.push_back(&REBin);
+  outputNodes.push_back(&REBout);
 
   // --- init transitions ---
   // INM --> Decoder --> INBout
