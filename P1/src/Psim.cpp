@@ -1,7 +1,6 @@
 #include <deque>
 #include <fstream>
 #include <functional>
-#include <iostream>
 #include <iterator>
 #include <ostream>
 #include <regex>
@@ -11,8 +10,6 @@
 // can only use std on this project, so it's okay to use this
 // would not use this under normal circumstances
 using namespace std;
-
-// TODO: Extra empty cycle at the end of the simulation
 
 // #beginregion --- Global Variables ---
 
@@ -60,7 +57,8 @@ int main(int argc, char* argv[]) {
   // initalize the hardware
   initHardware();
 
-  cout << printCycle(0) << endl;
+  // output the inital state
+  printCycle(0);
 
   // run the simulation
   Simulator();
@@ -806,12 +804,15 @@ void Simulator() {
     }
 
     // --- PHASE 3 ---
-    // Run the print cycle
-    cout << printCycle(step) << endl;
-    step++;
+    // Check if the simulation is complete
     finished = isFinished();
+
+    // Run the print cycle only if the simulation hasn't finished
+    if(!finished) printCycle(step);
+
+    step++;
     resetTransitions();
-  } while (finished == false);
+  } while (!finished);
   return;
 }
 
