@@ -12,9 +12,6 @@
 // would not use this under normal circumstances
 using namespace std;
 
-// TODO: Step 5 has the order of R4 and R5 Reversed
-// TODO: the function of AND is ambiguous
-// TODO: the function of OR is ambiguous
 // TODO: Extra empty cycle at the end of the simulation
 
 // #beginregion --- Global Variables ---
@@ -45,7 +42,6 @@ void outputFile(string);
 // argc is # of arguments including program execution
 // argv is the array of strings of every argument including execution
 int main(int argc, char* argv[]) {
-  cout << "Hello World!" << endl;
 
   // change path locations if arguments set
   if (argc >= 4) {
@@ -632,10 +628,10 @@ Token* LogicUnit(Token* in) {
     result = arg1 - arg2;
     return new REGToken(input->getDest(), result);
   case StringCode::AND:
-    result = arg1 && arg2;
+    result = arg1 & arg2;
     return new REGToken(input->getDest(), result);
   case StringCode::OR:
-    result = arg1 || arg2;
+    result = arg1 | arg2;
     return new REGToken(input->getDest(), result);
   case StringCode::LD: // ADDR case
     result = arg1 + arg2;
@@ -708,9 +704,9 @@ void initHardware() {
 
   // add nodes output queue
   outputNodes.push_back(&INBout);
-  outputNodes.push_back(&AIBout);
-  outputNodes.push_back(&LIBout);
   outputNodes.push_back(&ADBout);
+  outputNodes.push_back(&LIBout);
+  outputNodes.push_back(&AIBout);
   outputNodes.push_back(&REBout);
 
   // --- init transitions ---
@@ -741,8 +737,8 @@ void initHardware() {
   transitions.push_back(&issuer1);
   transitions.push_back(&issuer2);
   transitions.push_back(&addr);
-  transitions.push_back(&alu);
   transitions.push_back(&load);
+  transitions.push_back(&alu);
   transitions.push_back(&write);
 }
 
