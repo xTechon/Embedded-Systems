@@ -42,6 +42,29 @@
                 // Reveal the output only if unrecognized errors occur.
                 "reveal": "silent"
             },
+        },
+        {
+            "label": "BuildP2CPP",
+            "type": "shell",
+            "command": "g++",
+            "options": {
+                "cwd": "${workspaceFolder}/P2/"
+            },
+            "args": [
+                "-std=c++17",
+                "-g",
+                "-Og",
+                "-ggdb",
+                "-fno-eliminate-unused-debug-symbols",
+                "-o", 
+                "${workspaceFolder}/P2/bin/SIM",
+                "${workspaceFolder}/P2/src/SIM.cpp"
+            ],
+            "group": "build",
+            "presentation": {
+                // Reveal the output only if unrecognized errors occur.
+                "reveal": "silent"
+            },
         }
     ]
 }

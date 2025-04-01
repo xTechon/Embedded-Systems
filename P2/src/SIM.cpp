@@ -1,4 +1,5 @@
 // I have neither given nor received any unauthorized aid on this assignment
+#include <iostream>
 #include <string>
 
 // can only use std on this project, so it's okay to use this
@@ -26,6 +27,8 @@ int main(int argc, char* argv[]) {
     decompressionInput  = argv[2];
     decompressionOutput = argv[3];
   }
+  
+  cout << "hello world" << endl;
 
   return 0;
 }
