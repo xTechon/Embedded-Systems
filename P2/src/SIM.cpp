@@ -252,7 +252,7 @@ int StringToBinary(string input) { return stoi(input, nullptr, 2); }
 int CalcMismatch(string lhs, string rhs, int length) {
   int counter = 0;
   for (int i = 0; i < length; i++) {
-    if (lhs[i] == rhs[i]) counter++;
+    if (lhs[i] != rhs[i]) counter++;
   }
   return counter;
 }
