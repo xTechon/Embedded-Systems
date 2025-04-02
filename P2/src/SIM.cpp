@@ -21,6 +21,7 @@ vector<string> fileOutput; // contains the cycles for the file output
 vector<string> fileInput;  // contains an itterable of the 32-bit lines of the file only
 vector<string> dictImport; // stores the raw dictionary information
 const int DICTIONARY_SIZE = 16;
+const int BINARY_SIZE     = 32; // 32-bit binaries
 int mode                  = 0;
 
 // #endregion
@@ -208,5 +209,67 @@ void ImportDictionary(vector<string> import) {
     dictionary[i] = import[i];
   }
 } // END ImportDictionary
+
+// #endregion
+
+// #beginregion --- Bit Mismatch Calculation Functions ---
+
+// calculate the number of mismatched bits between two binary strings
+int CalcMismatch(string lhs, string rhs, int length) {
+  int counter = 0;
+  for (int i = 0; i < length; i++) {
+    if (lhs[i] == rhs[i]) counter++;    
+  }
+  return counter;
+}
+
+// create a list of mismatches of the input string with each entry in the dictionary
+vector<int> CalculateDictionaryMismatch(string input) {
+  vector<int> output;
+  for (int i = 0; i < DICTIONARY_SIZE; i++) {
+    output.push_back(CalcMismatch(input, dictionary[i], BINARY_SIZE));
+  }
+  return output;
+}
+
+struct dictMatch
+{
+  int index;
+  int mismatch;
+};
+
+// given a list of dictionary mismatch entries
+// filter out mismatch numbers greater than LIMIT
+// while storing their corresponding index
+vector<dictMatch> FilterDictionary(vector<int> list, int limit) {
+  vector<dictMatch> output;
+  for (int i = 0; i < DICTIONARY_SIZE; i++) {
+
+    if (list[i] > limit) continue;
+
+    dictMatch temp;
+    temp.mismatch = list[i];
+    temp.index    = i;
+
+    output.push_back(temp);
+  }
+  return output;
+}
+
+// #endregion
+
+// #beginregion --- Bit Mismatch Compression Functions ---
+
+// Mismatch function decider
+
+// 1-bit Mismatch
+
+// 2-bit consecutive mismatch
+
+// 4-bit consecutive mismatch
+
+// 2-bit anywhere mismatch
+
+// Direct Match
 
 // #endregion
