@@ -1,4 +1,5 @@
 // I have neither given nor received any unauthorized aid on this assignment
+#include <cstdlib>
 #include <fstream>
 #include <iterator>
 #include <ostream>
@@ -18,7 +19,7 @@ string decompressionInput  = "compressed.txt";
 string decompressionOutput = "dout.txt";
 vector<string> fileOutput; // contains the cycles for the file output
 vector<string> fileInput;  // contains an itterable of the 32-bit lines of the file only
-vector<string> dictInput;  // stores the raw dictionary information
+vector<string> dictImport; // stores the raw dictionary information
 const int DICTIONARY_SIZE = 16;
 int mode                  = 0;
 
@@ -103,7 +104,7 @@ vector<string> Parser(string filePath, string delimiterRegex) {
     string parsedToken = *it;
 
     // after encountering "xxxx", insert to dictionary import instead
-    if (dict) dictInput.push_back(parsedToken);
+    if (dict) dictImport.push_back(parsedToken);
 
     // before encoutering an "xxxx"...
     if ((parsedToken != "xxxx") && (!dict)) {
@@ -158,6 +159,7 @@ bool Ranker(dictVal i, dictVal j) {
   else return freq;
 }
 
+// Generate a Dictionary from Uncompressed Binary
 void GenerateDictionary(vector<string> input) {
 
   // keep track of the dictionary's order
@@ -199,5 +201,12 @@ void GenerateDictionary(vector<string> input) {
   }
 
 } // END Generate Dictionary
+
+// Import a Dictionary from Compressed Binary
+void ImportDictionary(vector<string> import) {
+  for (int i = 0; i < DICTIONARY_SIZE; i++) {
+    dictionary[i] = import[i];
+  }
+} // END ImportDictionary
 
 // #endregion
