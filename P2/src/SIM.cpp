@@ -1,6 +1,7 @@
 // I have neither given nor received any unauthorized aid on this assignment
 #include <fstream>
 #include <iterator>
+#include <ostream>
 #include <regex>
 #include <string>
 #include <vector>
@@ -17,14 +18,16 @@ string decompressionInput  = "compressed.txt";
 string decompressionOutput = "dout.txt";
 vector<string> fileOutput; // contains the cycles for the file output
 vector<string> fileInput;  // contains an itterable of the 32-bit lines of the file only
-vector<string> dictImport; // stores the raw dictionary information
-int mode = 0;
+vector<string> dictInput; // stores the raw dictionary information
+const int DICTIONARY_SIZE = 16;
+int mode                  = 0;
 
 // #endregion
 
 // #beginregion --- Main Function Declarations ---
 
 void ParseFile();
+void GenerateDictionary(vector<string>);
 
 // #endregion
 
@@ -47,12 +50,31 @@ int main(int argc, char* argv[]) {
 
   // get the mode from the input
   mode = stoi(modeInput);
-  
+
   // parse and load the file into memory
   ParseFile();
 
+  // generate the dictionary from the file
+  GenerateDictionary(fileInput);
+
   return 0;
 }
+
+// #beginregion --- Global Function Variables ---
+
+struct dictVal {
+  string binary;
+  int frequency;
+  int rank;
+};
+
+map<string, dictVal> dictMap;
+vector<dictVal> dictVect;
+string dictionary[DICTIONARY_SIZE];
+
+// #endregion
+
+// #beginregion --- Global Function Declarations ---
 
 // generic parser to create an itterable of the input file
 vector<string> Parser(string filePath, string delimiterRegex) {
@@ -80,7 +102,7 @@ vector<string> Parser(string filePath, string delimiterRegex) {
     string parsedToken = *it;
 
     // after encountering "xxxx", insert to dictionary import instead
-    if (dict) dictImport.push_back(parsedToken);
+    if (dict) dictInput.push_back(parsedToken);
 
     // before encoutering an "xxxx"...
     if ((parsedToken != "xxxx") && (!dict)) {
@@ -89,7 +111,6 @@ vector<string> Parser(string filePath, string delimiterRegex) {
     } else {
       dict = true;
     }
-
 
     ++fItterator;
   } // END While
@@ -110,3 +131,72 @@ void ParseFile() {
   }
 
 } // END ParseFile
+
+// itterate over a string vector, and output the vector to a file
+// each obj in the vector is placed on a newline
+void OutputFile(string filePath) {
+
+  ofstream outFile;
+  outFile.open(filePath);
+
+  for (auto item : fileOutput) {
+    // print to file
+    outFile << item << "\n";
+  }
+
+  outFile.close();
+  return;
+} // END OutputFile
+
+// sort based on frequency first followed by rank
+bool Ranker(dictVal i, dictVal j) {
+  bool freq = i.frequency > j.frequency;
+  // sort by rank if frequency is the same 
+  bool conflict = i.frequency == j.frequency;
+  if (conflict) return i.rank < j.rank;
+  else return freq;
+}
+
+void GenerateDictionary(vector<string> input) {
+
+  // keep track of the dictionary's order
+  int counter = 0;
+
+  // itterate over the input string of 32-bit binaries
+  for (auto binary : input) {
+
+    auto frequency = dictMap.find(binary);
+    auto doesNotExist   = dictMap.end();
+
+    // initalize the binary if it doesn't exist in the dictionaryMap
+    // increment otherwise
+    if (frequency == doesNotExist) {
+      dictVal temp;
+      temp.binary = binary;
+      temp.frequency = 1;
+      temp.rank = counter;
+      dictMap[binary] = temp;
+    } else {
+      frequency->second.frequency++;
+    }
+
+    // increment the counter for the next itteration
+    counter++;
+  } // End for loop
+  
+  // convert to vector for sorting and indexing
+  for (auto entry : dictMap){
+    dictVect.push_back(entry.second);
+  }
+  
+  // sort the vector
+  sort(dictVect.begin(), dictVect.end(), Ranker);
+  
+  // convert dict vector to string array
+  for (int i = 0; i < DICTIONARY_SIZE; i++) {
+    dictionary[i] = dictVect[i].binary;
+  }
+
+} // END Generate Dictionary
+
+// #endregion

@@ -53,7 +53,7 @@
             "args": [
                 "-std=c++17",
                 "-g",
-                "-Og",
+                "-O0",
                 "-ggdb",
                 "-fno-eliminate-unused-debug-symbols",
                 "-o", 
