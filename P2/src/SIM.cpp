@@ -1,7 +1,5 @@
 // I have neither given nor received any unauthorized aid on this assignment
-#include <ostream>
 #include <fstream>
-#include <iostream>
 #include <iterator>
 #include <regex>
 #include <string>
@@ -18,6 +16,15 @@ string compressionOutput   = "cout.txt";
 string decompressionInput  = "compressed.txt";
 string decompressionOutput = "dout.txt";
 vector<string> fileOutput; // contains the cycles for the file output
+vector<string> fileInput;  // contains an itterable of the 32-bit lines of the file only
+vector<string> dictImport; // stores the raw dictionary information
+int mode = 0;
+
+// #endregion
+
+// #beginregion --- Main Function Declarations ---
+
+void ParseFile();
 
 // #endregion
 
@@ -37,15 +44,18 @@ int main(int argc, char* argv[]) {
     decompressionInput  = argv[2];
     decompressionOutput = argv[3];
   }
+
+  // get the mode from the input
+  mode = stoi(modeInput);
   
-  cout << "hello world" << endl;
+  // parse and load the file into memory
+  ParseFile();
 
   return 0;
 }
 
-
-// generic token parsers as a helper function for the more specifc token generators
-vector<vector<string>> parser(string filePath, string delimiterRegex) {
+// generic parser to create an itterable of the input file
+vector<string> Parser(string filePath, string delimiterRegex) {
 
   // open the file
   ifstream file(filePath);
@@ -56,8 +66,9 @@ vector<vector<string>> parser(string filePath, string delimiterRegex) {
   istream_iterator<string> fItterator(file);
   istream_iterator<string> fEnd;
 
-  vector<vector<string>> output; // output variable
+  vector<string> output; // output variable
 
+  bool dict = false;
   // itterate over the file
   while (fItterator != fEnd) {
 
@@ -66,22 +77,20 @@ vector<vector<string>> parser(string filePath, string delimiterRegex) {
     sregex_token_iterator end;
 
     // make vector to contain token
-    vector<string> parsedToken;
+    string parsedToken = *it;
 
-    // itterate over the line of the file
-    while (it != end) {
+    // after encountering "xxxx", insert to dictionary import instead
+    if (dict) dictImport.push_back(parsedToken);
 
-      // make sure to remove any empty strings
-      if (*it != "") {
-        // Add the block to the output vector
-        parsedToken.push_back(*it);
-      }
+    // before encoutering an "xxxx"...
+    if ((parsedToken != "xxxx") && (!dict)) {
+      // add the token to the output
+      output.push_back(parsedToken);
+    } else {
+      dict = true;
+    }
 
-      ++it;
-    } // END While
 
-    // add the token to the output
-    output.push_back(parsedToken);
     ++fItterator;
   } // END While
 
@@ -90,3 +99,14 @@ vector<vector<string>> parser(string filePath, string delimiterRegex) {
 
   return output;
 } // END parser()
+
+// parse the file based on the mode
+void ParseFile() {
+  string reg = "\n";
+  if (mode == 1) {
+    fileInput = Parser(compressionInput, reg);
+  } else if (mode == 2) {
+    fileInput = Parser(decompressionInput, reg);
+  }
+
+} // END ParseFile
