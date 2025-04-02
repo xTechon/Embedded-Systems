@@ -1,4 +1,5 @@
 // I have neither given nor received any unauthorized aid on this assignment
+#include <cstddef>
 #include <cstdlib>
 #include <fstream>
 #include <iterator>
@@ -85,6 +86,18 @@ struct dictVal
 map<string, dictVal> dictMap;       // collect stats for each binary
 vector<dictVal> dictVect;           // sort the binaries based on stats
 string dictionary[DICTIONARY_SIZE]; // format the binaries for easier debugging
+
+// token used for both compression and decompression
+struct token
+{
+  int length;       // store the length of the compression
+  string original;  // the original binary string
+  string command;   // 3-bit command string
+  string SL;        // 5-bit Starting location or first mismatch location
+  string ML2;       // 5-bit 2nd Mismatch location
+  string bitmask;   // 4-bit bitmask
+  string dictIndex; // 4-bit index of the related dictionary entry
+};
 
 // #endregion
 
@@ -221,6 +234,9 @@ void ImportDictionary(vector<string> import) {
   }
 } // END ImportDictionary
 
+// turn a binary bit string into C++ integer
+int StringToBinary(string input) { return stoi(input, nullptr, 2); }
+
 // #endregion
 
 // #beginregion --- Bit Mismatch Calculation Functions ---
@@ -270,8 +286,33 @@ vector<dictMatch> FilterDictionary(vector<int> list, int limit) {
 // #endregion
 
 // #beginregion --- Bit Mismatch Compression Functions ---
+// All compression functions should return a token
 
 // Mismatch function decider
+// Given a vector input of a binary and dictionary entries
+// decide which mismatch functions to run and calculate the compression
+// length for each
+void DecideMismatches(string input, vector<dictMatch> reference) {
+
+  // init a list of possible compressions
+  vector<token> possibleCompressions;
+  for (auto entry : reference) {
+    switch (entry.mismatch) {
+    case 4:
+      // 4-bit consecutive only
+    case 3:
+      // Use bitmasking, can't do 3
+    case 2:
+      // 2-bit Mismatch
+      // can be consecutive or arbitrary
+    case 1:
+      // 1-bit Mismatch
+    case 0:
+      // Direct match
+      break;
+    }
+  }
+}
 
 // 1-bit Mismatch
 
@@ -286,13 +327,26 @@ vector<dictMatch> FilterDictionary(vector<int> list, int limit) {
 // #endregion
 
 // #beginregion --- Compression Function ---
+
+// Compresses the Binary using the global scoped fileInput variable
 void CompressBinary() {
+
   // generate the dictionary from the file
   GenerateDictionary(fileInput);
+
+  // Make sure file has the correct name
+  fileOutputName = compressionOutput;
 }
 
 // #endregion
 
 // #beginregion --- Decompression Function ---
-void DecompressBinary();
+
+// Decompresses the Binary using the global scoped fileInput variable
+void DecompressBinary() {
+
+  // Make sure file has the correct name
+  fileOutputName = decompressionOutput;
+}
+
 // #endregion
