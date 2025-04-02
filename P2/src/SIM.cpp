@@ -18,7 +18,7 @@ string decompressionInput  = "compressed.txt";
 string decompressionOutput = "dout.txt";
 vector<string> fileOutput; // contains the cycles for the file output
 vector<string> fileInput;  // contains an itterable of the 32-bit lines of the file only
-vector<string> dictInput; // stores the raw dictionary information
+vector<string> dictInput;  // stores the raw dictionary information
 const int DICTIONARY_SIZE = 16;
 int mode                  = 0;
 
@@ -62,15 +62,16 @@ int main(int argc, char* argv[]) {
 
 // #beginregion --- Global Function Variables ---
 
-struct dictVal {
+struct dictVal
+{
   string binary;
   int frequency;
   int rank;
 };
 
-map<string, dictVal> dictMap;
-vector<dictVal> dictVect;
-string dictionary[DICTIONARY_SIZE];
+map<string, dictVal> dictMap;       // collect stats for each binary
+vector<dictVal> dictVect;           // sort the binaries based on stats
+string dictionary[DICTIONARY_SIZE]; // format the binaries for easier debugging
 
 // #endregion
 
@@ -150,8 +151,8 @@ void OutputFile(string filePath) {
 
 // sort based on frequency first followed by rank
 bool Ranker(dictVal i, dictVal j) {
-  bool freq = i.frequency > j.frequency;
-  // sort by rank if frequency is the same 
+  bool freq     = i.frequency > j.frequency;
+  // sort by rank if frequency is the same
   bool conflict = i.frequency == j.frequency;
   if (conflict) return i.rank < j.rank;
   else return freq;
@@ -165,16 +166,16 @@ void GenerateDictionary(vector<string> input) {
   // itterate over the input string of 32-bit binaries
   for (auto binary : input) {
 
-    auto frequency = dictMap.find(binary);
-    auto doesNotExist   = dictMap.end();
+    auto frequency    = dictMap.find(binary);
+    auto doesNotExist = dictMap.end();
 
     // initalize the binary if it doesn't exist in the dictionaryMap
     // increment otherwise
     if (frequency == doesNotExist) {
       dictVal temp;
-      temp.binary = binary;
-      temp.frequency = 1;
-      temp.rank = counter;
+      temp.binary     = binary;
+      temp.frequency  = 1;
+      temp.rank       = counter;
       dictMap[binary] = temp;
     } else {
       frequency->second.frequency++;
@@ -183,15 +184,15 @@ void GenerateDictionary(vector<string> input) {
     // increment the counter for the next itteration
     counter++;
   } // End for loop
-  
+
   // convert to vector for sorting and indexing
-  for (auto entry : dictMap){
+  for (auto entry : dictMap) {
     dictVect.push_back(entry.second);
   }
-  
+
   // sort the vector
   sort(dictVect.begin(), dictVect.end(), Ranker);
-  
+
   // convert dict vector to string array
   for (int i = 0; i < DICTIONARY_SIZE; i++) {
     dictionary[i] = dictVect[i].binary;
