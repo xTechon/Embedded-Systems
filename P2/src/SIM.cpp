@@ -1,11 +1,10 @@
 // I have neither given nor received any unauthorized aid on this assignment
-#include <cstddef>
-#include <cstdlib>
 #include <fstream>
 #include <iterator>
 #include <ostream>
 #include <regex>
 #include <string>
+#include <utility>
 #include <vector>
 
 // can only use std on this project, so it's okay to use this
@@ -88,6 +87,7 @@ vector<dictVal> dictVect;           // sort the binaries based on stats
 string dictionary[DICTIONARY_SIZE]; // format the binaries for easier debugging
 
 // token used for both compression and decompression
+// errors place -1 in the length field
 struct token
 {
   int length;       // store the length of the compression
@@ -97,6 +97,13 @@ struct token
   string ML2;       // 5-bit 2nd Mismatch location
   string bitmask;   // 4-bit bitmask
   string dictIndex; // 4-bit index of the related dictionary entry
+};
+
+// tracks the mismatches of a binary and a specific dictionary entry
+struct dictMatch
+{
+  int index;
+  int mismatch;
 };
 
 // #endregion
@@ -259,12 +266,6 @@ vector<int> CalculateDictionaryMismatch(string input) {
   return output;
 }
 
-struct dictMatch
-{
-  int index;
-  int mismatch;
-};
-
 // given a list of dictionary mismatch entries
 // filter out mismatch numbers greater than LIMIT
 // while storing their corresponding index
@@ -283,46 +284,189 @@ vector<dictMatch> FilterDictionary(vector<int> list, int limit) {
   return output;
 }
 
+// given a binary and an entry
+// find the location of the mismatches
+// verify if they are adjacent or not
+// if they are not adjacent, return -1
+int MismatchLocation(string binary, string entry, int numMis) {
+  int location = 0;
+
+  bool consecutive    = false;
+  int mismatchCounter = numMis;
+
+  for (int i = 0; i < BINARY_SIZE; i++) {
+    // no more mismatches
+    if (mismatchCounter == 0) break;
+
+    bool match = binary[i] == entry[i];
+
+    // first instance
+    if (!match && !consecutive) {
+      consecutive = true;
+      location    = i;
+      mismatchCounter--;
+      continue;
+    }
+
+    // adjacent mismatch
+    if (!match && consecutive) {
+      mismatchCounter--;
+      continue;
+    }
+
+    // mismatch not adjacent
+    if (match && consecutive) {
+      location = -1;
+      break;
+    }
+  }
+
+  return location;
+} // END MismatchLocation()
+
+// find the locations of two, nonconsecutive mismatches
+pair<int, int> TwoBitLocations(string binary, string entry) {
+  pair<int, int> locations;
+
+  int counter = 0;
+
+  for (int i = 0; i < BINARY_SIZE; i++) {
+
+    if (counter == 2) break;
+
+    bool match = binary[i] == entry[i];
+
+    if (!match) {
+      if (counter == 0) locations.first = i;
+      if (counter == 1) locations.second = i;
+      counter++;
+    }
+  } // END For loop
+
+  return locations;
+} // END TwoBitLocations
+
 // #endregion
 
 // #beginregion --- Bit Mismatch Compression Functions ---
 // All compression functions should return a token
 
+// 1-bit Mismatch
+token OneBitMismatch(string binary, string entry) {
+  token output;
+  int location = MismatchLocation(binary, entry, 1);
+  if (location == -1) {
+    output.length = -1;
+    return output;
+  }
+  return output;
+}
+
+// 2-bit consecutive mismatch
+token TwoBitMismatch(string binary, string entry){
+  token output;
+  int location = MismatchLocation(binary, entry, 2);
+  if (location == -1) {
+    output.length = -1;
+    return output;
+  }
+  return output;
+}
+
+
+// 4-bit consecutive mismatch
+token FourBitMismatch(string binary, string entry){
+  token output;
+  int location = MismatchLocation(binary, entry, 4);
+  if (location == -1) {
+    output.length = -1;
+    return output;
+  }
+  return output;
+}
+
+
+// 2-bit anywhere mismatch
+token Arbitrary2Mismatch(string binary, string entry){
+  token output;
+  int location = MismatchLocation(binary, entry, 2);
+  if (location != -1) {
+    output.length = -1;
+    return output;
+  }
+  return output;
+}
+
+
+// Direct Match
+token DirectMatch(string binary, string entry){
+  token output;
+  return output;
+}
+
+
 // Mismatch function decider
 // Given a vector input of a binary and dictionary entries
 // decide which mismatch functions to run and calculate the compression
 // length for each
-void DecideMismatches(string input, vector<dictMatch> reference) {
+vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
 
   // init a list of possible compressions
   vector<token> possibleCompressions;
+
+  // temporary token usage
+  token temp;
+  token temp2;
+
+  // itterate over the dictionary list
   for (auto entry : reference) {
+
+    // send the entry to the relevant function
     switch (entry.mismatch) {
+
     case 4:
       // 4-bit consecutive only
+      temp = FourBitMismatch(input, dictionary[entry.index]);
+      break;
+
     case 3:
       // Use bitmasking, can't do 3
+      // TODO: add bitmasking to mismatch
+      break;
+
     case 2:
       // 2-bit Mismatch
       // can be consecutive or arbitrary
+      temp  = TwoBitMismatch(input, dictionary[entry.index]);
+      temp2 = Arbitrary2Mismatch(input, dictionary[entry.index]);
+
+      // skip error from temp2
+      if (temp2.length == -1) break;
+      // make sure 2nd token is added
+      possibleCompressions.push_back(temp2);
+      break;
+
     case 1:
       // 1-bit Mismatch
+      temp = OneBitMismatch(input, dictionary[entry.index]);
+      break;
+
     case 0:
       // Direct match
+      temp = DirectMatch(input, dictionary[entry.index]);
       break;
     }
-  }
-}
 
-// 1-bit Mismatch
+    // error, skip token
+    if (temp.length == -1) continue;
 
-// 2-bit consecutive mismatch
+    // add the token to the vector
+    possibleCompressions.push_back(temp);
 
-// 4-bit consecutive mismatch
+  } // END For Loop
 
-// 2-bit anywhere mismatch
-
-// Direct Match
+  return possibleCompressions;
+} // END DecideMismatches()
 
 // #endregion
 
