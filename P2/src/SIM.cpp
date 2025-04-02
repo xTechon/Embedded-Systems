@@ -17,6 +17,7 @@ string compressionInput    = "original.txt";
 string compressionOutput   = "cout.txt";
 string decompressionInput  = "compressed.txt";
 string decompressionOutput = "dout.txt";
+string fileOutputName      = compressionOutput;
 vector<string> fileOutput; // contains the cycles for the file output
 vector<string> fileInput;  // contains an itterable of the 32-bit lines of the file only
 vector<string> dictImport; // stores the raw dictionary information
@@ -28,8 +29,10 @@ int mode                  = 0;
 
 // #beginregion --- Main Function Declarations ---
 
-void ParseFile();
-void GenerateDictionary(vector<string>);
+void ParseFile();                 // parse the file regarless of mode
+void CompressBinary();            // compression function containing relevant logic
+void DecompressBinary();          // decompression function containing relevant logic
+void OutputFile(string filePath); // output file regarless of mode
 
 // #endregion
 
@@ -56,8 +59,16 @@ int main(int argc, char* argv[]) {
   // parse and load the file into memory
   ParseFile();
 
-  // generate the dictionary from the file
-  GenerateDictionary(fileInput);
+  if (mode == 1) {
+    // compression function
+    CompressBinary();
+  } else if (mode == 2) {
+    // decompression function
+    DecompressBinary();
+  }
+
+  // write to file regardless of mode
+  OutputFile(fileOutputName);
 
   return 0;
 }
@@ -218,7 +229,7 @@ void ImportDictionary(vector<string> import) {
 int CalcMismatch(string lhs, string rhs, int length) {
   int counter = 0;
   for (int i = 0; i < length; i++) {
-    if (lhs[i] == rhs[i]) counter++;    
+    if (lhs[i] == rhs[i]) counter++;
   }
   return counter;
 }
@@ -272,4 +283,16 @@ vector<dictMatch> FilterDictionary(vector<int> list, int limit) {
 
 // Direct Match
 
+// #endregion
+
+// #beginregion --- Compression Function ---
+void CompressBinary() {
+  // generate the dictionary from the file
+  GenerateDictionary(fileInput);
+}
+
+// #endregion
+
+// #beginregion --- Decompression Function ---
+void DecompressBinary();
 // #endregion
