@@ -24,6 +24,7 @@ vector<string> fileInput;  // contains an itterable of the 32-bit lines of the f
 vector<string> dictImport; // stores the raw dictionary information
 const int DICTIONARY_SIZE = 16;
 const int BINARY_SIZE     = 32; // 32-bit binaries
+const int BITMASK_LENGTH  = 4;
 int mode                  = 0;
 
 // #endregion
@@ -247,7 +248,7 @@ void ImportDictionary(vector<string> import) {
 } // END ImportDictionary
 
 // turn a binary bit string into C++ integer
-int StringToBinary(string input) { return stoi(input, nullptr, 2); }
+int StringBinaryToInt(string input) { return stoi(input, nullptr, 2); }
 
 // use Enumerables to track ranking easier
 int PatternToRank(PATTERNS input) {
@@ -269,7 +270,29 @@ int PatternToRank(PATTERNS input) {
   case DIRECT:
     return 7;
   }
-}
+} // END PatternToRank
+
+// user enumerables to for better control string management
+string PatternToStringBinary(PATTERNS input) {
+  switch (input) {
+  case ORIGNIAL:
+    return "000";
+  case RLE:
+    return "001";
+  case BITMASK:
+    return "010";
+  case ONEBIT:
+    return "011";
+  case TWOBITC:
+    return "100";
+  case FOURBIT:
+    return "101";
+  case TWOBITA:
+    return "110";
+  case DIRECT:
+    return "111";
+  }
+} // END PatternToStringBinary
 
 // #endregion
 
@@ -287,7 +310,7 @@ pair<int, string> GenerateBitmask(string binary, string entry, int numMis, int b
 
   pair<int, string> output;
   string bitmask;
-  
+
   int location            = 0;
   int remainingMismatches = numMis;
   int remainingDist       = bitLength;
@@ -319,8 +342,8 @@ pair<int, string> GenerateBitmask(string binary, string entry, int numMis, int b
       remainingDist--;
     }
   } // END for loop
-  
-  output.first  = location;
+
+  output.first = location;
 
   // a bitmask is not possible if there are still mismatches
   // not captured by the entire bitmask
@@ -493,7 +516,7 @@ token OneBitMismatch(string binary, int index) {
   }
 
   // add command string
-  output.command = "011";
+  output.command = PatternToStringBinary(ONEBIT);
 
   // rank from pdf
   output.rank = PatternToRank(ONEBIT);
@@ -531,7 +554,7 @@ token TwoBitMismatch(string binary, int index) {
   }
 
   // add command string
-  output.command = "100";
+  output.command = PatternToStringBinary(TWOBITC);
 
   // rank from pdf
   output.rank = PatternToRank(TWOBITC);
@@ -569,7 +592,7 @@ token FourBitMismatch(string binary, int index) {
   }
 
   // add command string
-  output.command = "101";
+  output.command = PatternToStringBinary(FOURBIT);
 
   // rank from pdf
   output.rank = PatternToRank(FOURBIT);
@@ -603,7 +626,7 @@ token Arbitrary2Mismatch(string binary, int index) {
   pair<int, int> locations = TwoBitLocations(binary, entry);
 
   // add command string
-  output.command = "110";
+  output.command = PatternToStringBinary(TWOBITA);
 
   // rank from pdf
   output.rank = PatternToRank(TWOBITA);
@@ -643,7 +666,7 @@ token DirectMatch(string binary, int index) {
   output.original = binary;
 
   // command string
-  output.command = "111";
+  output.command = PatternToStringBinary(DIRECT);
 
   // add dictionary index
   bitset<4> ind    = index;
@@ -660,8 +683,8 @@ token DirectMatch(string binary, int index) {
 
 // Mismatch function decider
 // Given a vector input of a binary and dictionary entries
-// decide which mismatch functions to run and calculate the compression
-// length for each
+// decide which mismatch functions to run and calculate the compression length for each
+// also get the possible bitmask of each length
 vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
 
   // init a list of possible compressions
@@ -670,6 +693,7 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
   // temporary token usage
   token temp;
   token temp2;
+  token bitmasking;
 
   // itterate over the dictionary list
   for (auto entry : reference) {
