@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
     // decompression function
     DecompressBinary();
   }
-  
+
   // compile the tokens to a useable format for the output function
   CompileTokens();
 
@@ -301,6 +301,19 @@ string PatternToStringBinary(PATTERNS input) {
     return "111";
   }
 } // END PatternToStringBinary
+
+// Turn Binary string into the correct command
+PATTERNS StringBinaryToPattern(string command) {
+  if (command == "000") return ORIGNIAL;
+  if (command == "001") return RLE;
+  if (command == "010") return BITMASK;
+  if (command == "011") return ONEBIT;
+  if (command == "100") return TWOBITC;
+  if (command == "101") return FOURBIT;
+  if (command == "110") return TWOBITA;
+  if (command == "111") return DIRECT;
+  return ORIGNIAL;
+} // END StringBinaryToPattern
 
 // #endregion
 
@@ -844,15 +857,280 @@ void CompressBinary() {
 
 // #endregion
 
+// #beginregion --- Decompression Functions ---
+
+// flips the bit of the binary
+// given the entire binary string and a location
+string FlipBit(string binary, int location) {
+  // convert the string to an integer
+  int temp   = stoi(binary.substr(location, 1));
+  // convert the integer to a boolean
+  bool temp2 = temp;
+  // flip the boolean
+  bool temp3 = !temp2;
+  // convert the boolean back into an integer
+  temp       = temp3;
+  // convert the integer back into a string
+  return to_string(temp);
+}
+
+token DOriginal(string::iterator cursor) {
+  token output;
+
+  string binary;
+  string original;
+
+  // add the rank of the token
+  output.rank = PatternToRank(ORIGNIAL);
+
+  // get the full command
+  output.full = binary.append(cursor, cursor + (3 + BINARY_SIZE));
+
+  // list the length of the token
+  output.length = output.full.length();
+
+  // derive the original binary string
+  output.original = original.append(cursor + 3, cursor + (3 + BINARY_SIZE));
+
+  return output;
+} // END DOriginal
+
+token DRLE(string::iterator cursor);
+token DBitmask(string::iterator cursor);
+
+token D1BitMis(string::iterator cursor) {
+  token output;
+
+  string original;
+
+  // command + location + dictionary index
+  int length = 3 + 5 + 4;
+
+  // add the rank of the token
+  output.rank = PatternToRank(ONEBIT);
+
+  // add the length of the token
+  output.length = length;
+
+  string binary(cursor, cursor + length);
+
+  // get the full compressed binary string
+  output.full = binary;
+
+  // get the location
+  string loc(cursor + 3, cursor + 3 + 5);
+  int location = StringBinaryToInt(loc);
+
+  // get the dictionary index
+  string dictIn(cursor + 3 + 5, cursor + length);
+  int dictIndex = StringBinaryToInt(dictIn);
+
+  // derive the original binary string
+  original = FlipBit(dictionary[dictIndex], location);
+
+  output.original = original;
+
+  return output;
+} // END D1BitMis
+
+token D2BitCMis(string::iterator cursor) {
+
+  token output;
+
+  string original;
+
+  // command + location + dictionary index
+  int length = 3 + 5 + 4;
+
+  // add the rank of the token
+  output.rank = PatternToRank(TWOBITC);
+
+  // add the length of the token
+  output.length = length;
+
+  string binary(cursor, cursor + length);
+
+  // get the full compressed binary string
+  output.full = binary;
+
+  // get the location
+  string loc(cursor + 3, cursor + 3 + 5);
+  int location = StringBinaryToInt(loc);
+
+  // get the dictionary index
+  string dictIn(cursor + 3 + 5, cursor + length);
+  int dictIndex = StringBinaryToInt(dictIn);
+
+  // derive the original binary string
+  original = FlipBit(dictionary[dictIndex], location);
+  original = FlipBit(original, location+1);
+
+  output.original = original;
+
+  return output;
+} // END D2BitCMis
+
+token D4BitMis(string::iterator cursor) {
+
+  token output;
+  string original;
+
+  // command + location + dictionary index
+  int length = 3 + 5 + 4;
+
+  // add the rank of the token
+  output.rank = PatternToRank(FOURBIT);
+
+  // add the length of the token
+  output.length = length;
+
+  string binary(cursor, cursor + length);
+
+  // get the full compressed binary string
+  output.full = binary;
+
+  // get the location
+  string loc(cursor + 3, cursor + 3 + 5);
+  int location = StringBinaryToInt(loc);
+
+  // get the dictionary index
+  string dictIn(cursor + 3 + 5, cursor + length);
+  int dictIndex = StringBinaryToInt(dictIn);
+
+  // derive the original binary string
+  original = FlipBit(dictionary[dictIndex], location);
+  original = FlipBit(original, location+1);
+  original = FlipBit(original, location+2);
+  original = FlipBit(original, location+3);
+
+  output.original = original;
+
+  return output;
+} // END D4BitMis
+
+token D2BitAMis(string::iterator cursor) {
+  
+  token output;
+  string original;
+
+  // command + location + dictionary index
+  int length = 3 + 5 + 5 + 4;
+
+  // add the rank of the token
+  output.rank = PatternToRank(TWOBITA);
+
+  // add the length of the token
+  output.length = length;
+
+  string binary(cursor, cursor + length);
+
+  // get the full compressed binary string
+  output.full = binary;
+
+  // get the first location
+  string loc(cursor + 3, cursor + 3 + 5);
+  int location = StringBinaryToInt(loc);
+
+  // get the first location
+  string loc2(cursor + 3 + 5 , cursor + 3 + 5 + 5);
+  int location2 = StringBinaryToInt(loc2);
+
+  // get the dictionary index
+  string dictIn(cursor + 3 + 5 + 5, cursor + length);
+  int dictIndex = StringBinaryToInt(dictIn);
+
+  // derive the original binary string
+  original = FlipBit(dictionary[dictIndex], location);
+  original = FlipBit(original, location2);
+
+  output.original = original;
+
+  return output;
+} // END D2BitAMis
+
+token DDirect(string::iterator cursor) {
+  
+  token output;
+  string original;
+  
+  int length = 3 + 4;
+  
+  output.rank = PatternToRank(DIRECT);
+
+  string binary(cursor, cursor+length);
+  output.full = binary;
+  
+  // get the dictionary Index
+  string dictIn(cursor + 3, cursor + length);
+  int dictIndex = StringBinaryToInt(dictIn);
+  
+  // derive the original binary string
+  
+  output.original = dictionary[dictIndex];
+  
+  return output;
+} // END DDirect
+
+// #endregion
+
 // #beginregion --- Decompression Tokenizer ---
+
+// turn the file into one large string
 string CombineFile(vector<string> input) {
   string output;
-  for (auto line : input){
+  for (auto line : input) {
     output.append(line);
   }
   return output;
 } // END CombineFile
 
+// call the correct decompression function based on the command
+token Decider(PATTERNS command, string::iterator cursor) {
+  switch (command) {
+  case ORIGNIAL:
+    return DOriginal(cursor);
+  case RLE:
+    return DRLE(cursor);
+  case BITMASK:
+    return DBitmask(cursor);
+  case ONEBIT:
+    return D1BitMis(cursor);
+  case TWOBITC:
+    return D2BitCMis(cursor);
+  case FOURBIT:
+    return D4BitMis(cursor);
+  case TWOBITA:
+    return D2BitAMis(cursor);
+  case DIRECT:
+    return DDirect(cursor);
+  }
+} // END Decider
+
+void Tokenizer(string program) {
+  string command;
+  PATTERNS curCommand;
+  token curToken;
+  token prevToken; // used to detect RLE
+  // go over the program character by character
+  for (auto it = program.begin(); it != program.end(); it++) {
+
+    // get the next command as a string
+    command.append(it, it + 3);
+
+    // convert to an enumerable
+    curCommand = StringBinaryToPattern(command);
+
+    curToken = Decider(curCommand, it);
+
+    // jump the itterator by the length field
+    it = it + curToken.length;
+    // negate the incomming increment
+    it--;
+
+    // put the token on the preprocessor
+    preProcessedOutput.push_back(curToken);
+  }
+} // END Tokenizer
 
 // #endregion
 
@@ -863,10 +1141,10 @@ void DecompressBinary() {
 
   // import the dictionary
   ImportDictionary(dictImport);
-  
+
   // turn the imported file into one large string
   string program = CombineFile(fileInput);
-  
+
   // tokenize the string
 
   // Make sure file has the correct name
@@ -903,7 +1181,7 @@ string CompileDecompressedString(vector<token> input) {
 
 void AddDictionary() {
   fileOutput.push_back("xxxx");
-  for (int i = 0; i < DICTIONARY_SIZE; i++){
+  for (int i = 0; i < DICTIONARY_SIZE; i++) {
     fileOutput.push_back(dictionary[i]);
   }
 } // END AddDictionary
@@ -943,7 +1221,7 @@ void CompileTokens() {
     // add the last line to the file output
     fileOutput.push_back(last);
   }
-  
+
   // add the dictionary to the file output if in compressed mode
   if (mode == 1) AddDictionary();
 
