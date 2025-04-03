@@ -862,16 +862,41 @@ void CompressBinary() {
 // flips the bit of the binary
 // given the entire binary string and a location
 string FlipBit(string binary, int location) {
-  // convert the string to an integer
-  int temp   = stoi(binary.substr(location, 1));
-  // convert the integer to a boolean
-  bool temp2 = temp;
-  // flip the boolean
-  bool temp3 = !temp2;
-  // convert the boolean back into an integer
-  temp       = temp3;
-  // convert the integer back into a string
-  return to_string(temp);
+  
+  // get the digit from the string
+  char digit = binary.at(location);
+  
+  // flip the bit
+  if (digit == '0') digit = '1';
+  else if (digit == '1') digit = '0';
+  
+  // replace the digit in the binary string
+  binary.replace(location, 1, 1,digit);
+  
+  return binary;
+}
+
+// given a binary string, location, and a bitmask, apply the bitmask
+string ApplyBitmask(string binary, string bitmask, int location) {
+  
+  int maskLength = bitmask.length();
+
+  // get the portion of the binary string to apply a bitmask
+  string target(binary.substr(location, maskLength));
+  
+  int tar = StringBinaryToInt(target);
+  int mask = StringBinaryToInt(bitmask);
+  
+  bitset<BITMASK_LENGTH> output = tar;
+  bitset<BITMASK_LENGTH> bmask = mask;
+  
+  // apply the bitmask
+  output = output & bmask;
+  
+  // replace the portion of the binary with the new bitmasked portion
+  binary.replace(location, BITMASK_LENGTH, output.to_string());
+  
+  return binary;
 }
 
 token DOriginal(string::iterator cursor) {
@@ -896,7 +921,40 @@ token DOriginal(string::iterator cursor) {
 } // END DOriginal
 
 token DRLE(string::iterator cursor);
-token DBitmask(string::iterator cursor);
+token DBitmask(string::iterator cursor) {
+  token output;
+
+  int length = 3 + 5 + 4 + 4;
+  
+  // token metadata
+  output.rank = PatternToRank(BITMASK);
+  output.command = PatternToStringBinary(BITMASK);
+  output.length = length;
+  
+  string binary(cursor, cursor+length);
+  output.full = binary;
+  
+  // get the location
+  string loc(cursor + 3, cursor + 3 + 5);
+  int location = StringBinaryToInt(loc);
+  
+  // get the bitmask
+  string bitmask(cursor + 3 + 5, cursor + 3 + 5 + 4);
+
+  // get the dictionary Index
+  string dictIndex(cursor + 3 + 5 + 4, cursor + length);
+  int dictIn = StringBinaryToInt(dictIndex);
+  
+  
+  output.dictIn = dictIn;
+  output.dictIndex = dictIndex;
+
+  // get the original string
+  string original = ApplyBitmask(dictionary[dictIn], bitmask, location);
+  output.original = original;
+  
+  return output;
+} // END DBitmask
 
 token D1BitMis(string::iterator cursor) {
   token output;
@@ -922,11 +980,14 @@ token D1BitMis(string::iterator cursor) {
   int location = StringBinaryToInt(loc);
 
   // get the dictionary index
-  string dictIn(cursor + 3 + 5, cursor + length);
-  int dictIndex = StringBinaryToInt(dictIn);
+  string dictIndex(cursor + 3 + 5, cursor + length);
+  int dictIn = StringBinaryToInt(dictIndex);
+
+  output.dictIn = dictIn;
+  output.dictIndex = dictIndex;
 
   // derive the original binary string
-  original = FlipBit(dictionary[dictIndex], location);
+  original = FlipBit(dictionary[dictIn], location);
 
   output.original = original;
 
@@ -958,11 +1019,14 @@ token D2BitCMis(string::iterator cursor) {
   int location = StringBinaryToInt(loc);
 
   // get the dictionary index
-  string dictIn(cursor + 3 + 5, cursor + length);
-  int dictIndex = StringBinaryToInt(dictIn);
+  string dictIndex(cursor + 3 + 5, cursor + length);
+  int dictIn = StringBinaryToInt(dictIndex);
+
+  output.dictIn = dictIn;
+  output.dictIndex = dictIndex;
 
   // derive the original binary string
-  original = FlipBit(dictionary[dictIndex], location);
+  original = FlipBit(dictionary[dictIn], location);
   original = FlipBit(original, location+1);
 
   output.original = original;
@@ -994,11 +1058,14 @@ token D4BitMis(string::iterator cursor) {
   int location = StringBinaryToInt(loc);
 
   // get the dictionary index
-  string dictIn(cursor + 3 + 5, cursor + length);
-  int dictIndex = StringBinaryToInt(dictIn);
+  string dictIndex(cursor + 3 + 5, cursor + length);
+  int dictIn = StringBinaryToInt(dictIndex);
+
+  output.dictIn = dictIn;
+  output.dictIndex = dictIndex;
 
   // derive the original binary string
-  original = FlipBit(dictionary[dictIndex], location);
+  original = FlipBit(dictionary[dictIn], location);
   original = FlipBit(original, location+1);
   original = FlipBit(original, location+2);
   original = FlipBit(original, location+3);
@@ -1036,11 +1103,14 @@ token D2BitAMis(string::iterator cursor) {
   int location2 = StringBinaryToInt(loc2);
 
   // get the dictionary index
-  string dictIn(cursor + 3 + 5 + 5, cursor + length);
-  int dictIndex = StringBinaryToInt(dictIn);
+  string dictIndex(cursor + 3 + 5 + 5, cursor + length);
+  int dictIn = StringBinaryToInt(dictIndex);
+
+  output.dictIn = dictIn;
+  output.dictIndex = dictIndex;
 
   // derive the original binary string
-  original = FlipBit(dictionary[dictIndex], location);
+  original = FlipBit(dictionary[dictIn], location);
   original = FlipBit(original, location2);
 
   output.original = original;
@@ -1051,22 +1121,26 @@ token D2BitAMis(string::iterator cursor) {
 token DDirect(string::iterator cursor) {
   
   token output;
-  string original;
   
   int length = 3 + 4;
   
   output.rank = PatternToRank(DIRECT);
+  output.command = PatternToStringBinary(DIRECT);
+  output.length = length;
 
   string binary(cursor, cursor+length);
   output.full = binary;
   
   // get the dictionary Index
-  string dictIn(cursor + 3, cursor + length);
-  int dictIndex = StringBinaryToInt(dictIn);
+  string dictIndex(cursor + 3, cursor + length);
+  int dictIn = StringBinaryToInt(dictIndex);
+  
+  output.dictIn = dictIn;
+  output.dictIndex = dictIndex;
   
   // derive the original binary string
   
-  output.original = dictionary[dictIndex];
+  output.original = dictionary[dictIn];
   
   return output;
 } // END DDirect
@@ -1086,13 +1160,15 @@ string CombineFile(vector<string> input) {
 
 // call the correct decompression function based on the command
 token Decider(PATTERNS command, string::iterator cursor) {
+  token output;
+  output.length = -1;
   switch (command) {
   case ORIGNIAL:
     return DOriginal(cursor);
-  case RLE:
-    return DRLE(cursor);
-  case BITMASK:
-    return DBitmask(cursor);
+  //case RLE:
+    //return DRLE(cursor);
+  //case BITMASK:
+    //return DBitmask(cursor);
   case ONEBIT:
     return D1BitMis(cursor);
   case TWOBITC:
@@ -1104,6 +1180,7 @@ token Decider(PATTERNS command, string::iterator cursor) {
   case DIRECT:
     return DDirect(cursor);
   }
+  return output;
 } // END Decider
 
 void Tokenizer(string program) {
@@ -1129,6 +1206,9 @@ void Tokenizer(string program) {
 
     // put the token on the preprocessor
     preProcessedOutput.push_back(curToken);
+    
+    // clear the command string before next itteration
+    command.clear();
   }
 } // END Tokenizer
 
@@ -1146,6 +1226,7 @@ void DecompressBinary() {
   string program = CombineFile(fileInput);
 
   // tokenize the string
+  Tokenizer(program);
 
   // Make sure file has the correct name
   fileOutputName = decompressionOutput;
