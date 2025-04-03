@@ -719,6 +719,7 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
 
       // skip error from temp2
       if (temp2.length == -1) break;
+      temp2.dictIn = entry.index;
       // make sure 2nd token is added
       possibleCompressions.push_back(temp2);
       break;
@@ -739,6 +740,8 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
 
     // only use bitmasking if there is at least 1 mismatch
     if (entry.mismatch != 0) bitmasking = BitmaskingCompression(input, entry.index, entry.mismatch);
+    
+    bitmasking.dictIn = entry.index;
 
     // only append the bitmask token if there were no errors
     if (bitmasking.length != -1) possibleCompressions.push_back(bitmasking);
