@@ -99,6 +99,7 @@ struct token
   string ML2;       // 5-bit 2nd Mismatch location
   string bitmask;   // 4-bit bitmask
   string dictIndex; // 4-bit index of the related dictionary entry
+  string full;      // the entire compressed binary string
 };
 
 // tracks the mismatches of a binary and a specific dictionary entry
@@ -107,6 +108,8 @@ struct dictMatch
   int index;
   int mismatch;
 };
+
+enum PATTERNS { ORIGNIAL, RLE, BITMASK, ONEBIT, TWOBITC, FOURBIT, TWOBITA, DIRECT };
 
 // #endregion
 
@@ -246,6 +249,89 @@ void ImportDictionary(vector<string> import) {
 // turn a binary bit string into C++ integer
 int StringToBinary(string input) { return stoi(input, nullptr, 2); }
 
+// use Enumerables to track ranking easier
+int PatternToRank(PATTERNS input) {
+  switch (input) {
+  case ORIGNIAL:
+    return 0;
+  case RLE:
+    return 1;
+  case BITMASK:
+    return 2;
+  case ONEBIT:
+    return 3;
+  case TWOBITC:
+    return 4;
+  case FOURBIT:
+    return 5;
+  case TWOBITA:
+    return 6;
+  case DIRECT:
+    return 7;
+  }
+}
+
+// #endregion
+
+// #beginregion --- Bitmasking Functions ---
+
+// given a binary and an entry
+// and the number of mismatches
+// and the length of the bitmask
+// find the location of the first mismatch
+// make sure they no more than bitmask length from each other
+// and the first mismatch cannot be less than the bitmask length distance from end of binary
+// returns a pair where first value is the int starting location and second is the bitmask
+// returns -1 in the location field if a bitmask is not possible
+pair<int, string> GenerateBitmask(string binary, string entry, int numMis, int bitLength) {
+
+  pair<int, string> output;
+  string bitmask;
+  
+  int location            = 0;
+  int remainingMismatches = numMis;
+  int remainingDist       = bitLength;
+  bool maskStart          = false;
+
+  // itterate over length of binary - bitmask length
+  for (int i = 0; i < (BINARY_SIZE - bitLength); i++) {
+    // maximum lenght of bitmask, exit
+    if (remainingDist == 0) break;
+
+    bool match = binary[i] == entry[i];
+
+    // first mismatch
+    if (!match && !maskStart) {
+      location  = i;
+      maskStart = true;
+      bitmask.append("1");
+      remainingMismatches--;
+      continue;
+    }
+
+    // generate the bitmask
+    if (maskStart) {
+      if (match) bitmask.append("0");
+      else {
+        bitmask.append("1");
+        remainingMismatches--;
+      }
+      remainingDist--;
+    }
+  } // END for loop
+  
+  output.first  = location;
+
+  // a bitmask is not possible if there are still mismatches
+  // not captured by the entire bitmask
+  // or the bitmask was not able to complete
+  if ((remainingDist != 0) || (remainingMismatches != 0)) output.first = -1;
+
+  output.second = bitmask;
+  return output;
+} // END GenerateBitmask
+
+
 // #endregion
 
 // #beginregion --- Bit Mismatch Calculation Functions ---
@@ -368,6 +454,9 @@ token OneBitMismatch(string binary, int index) {
   // add command string
   output.command = "011";
 
+  // rank from pdf
+  output.rank = PatternToRank(ONEBIT);
+
   // add mismatch location
   bitset<5> loc = location;
   output.SL     = loc.to_string();
@@ -379,6 +468,12 @@ token OneBitMismatch(string binary, int index) {
   // add the original binary to the token
   output.original = binary;
 
+  // generate the full pattern
+  output.full = output.command + output.SL + output.dictIndex;
+
+  // get the length of the full command
+  output.length = output.full.length();
+
   return output;
 }
 
@@ -387,10 +482,36 @@ token TwoBitMismatch(string binary, int index) {
   token output;
   string entry = dictionary[index];
   int location = MismatchLocation(binary, entry, 2);
+
+  // return error if any
   if (location == -1) {
     output.length = -1;
     return output;
   }
+
+  // add command string
+  output.command = "100";
+
+  // rank from pdf
+  output.rank = PatternToRank(TWOBITC);
+
+  // add mismatch location
+  bitset<5> loc = location;
+  output.SL     = loc.to_string();
+
+  // add dictionary index
+  bitset<4> ind    = index;
+  output.dictIndex = ind.to_string();
+
+  // add the original binary to the token
+  output.original = binary;
+
+  // generate the full pattern
+  output.full = output.command + output.SL + output.dictIndex;
+
+  // get the length of the full command
+  output.length = output.full.length();
+
   return output;
 }
 
@@ -399,10 +520,36 @@ token FourBitMismatch(string binary, int index) {
   token output;
   string entry = dictionary[index];
   int location = MismatchLocation(binary, entry, 4);
+
+  // return error if any
   if (location == -1) {
     output.length = -1;
     return output;
   }
+
+  // add command string
+  output.command = "101";
+
+  // rank from pdf
+  output.rank = PatternToRank(FOURBIT);
+
+  // add mismatch location
+  bitset<5> loc = location;
+  output.SL     = loc.to_string();
+
+  // add dictionary index
+  bitset<4> ind    = index;
+  output.dictIndex = ind.to_string();
+
+  // add the original binary to the token
+  output.original = binary;
+
+  // generate the full pattern
+  output.full = output.command + output.SL + output.dictIndex;
+
+  // get the length of the full command
+  output.length = output.full.length();
+
   return output;
 }
 
@@ -410,17 +557,63 @@ token FourBitMismatch(string binary, int index) {
 token Arbitrary2Mismatch(string binary, int index) {
   token output;
   string entry = dictionary[index];
-  int location = MismatchLocation(binary, entry, 2);
-  if (location != -1) {
-    output.length = -1;
-    return output;
-  }
+
+  // get the locations for the mismatches
+  pair<int, int> locations = TwoBitLocations(binary, entry);
+
+  // add command string
+  output.command = "110";
+
+  // rank from pdf
+  output.rank = PatternToRank(TWOBITA);
+
+  // add mismatch location 1
+  bitset<5> loc = locations.first;
+  output.SL     = loc.to_string();
+
+  // add mismatch location 2
+  bitset<5> loc2 = locations.second;
+  output.ML2     = loc2.to_string();
+
+  // add dictionary index
+  bitset<4> ind    = index;
+  output.dictIndex = ind.to_string();
+
+  // add the original binary to the token
+  output.original = binary;
+
+  // generate the full pattern
+  output.full = output.command + output.SL + output.ML2 + output.dictIndex;
+
+  // get the length of the full command
+  output.length = output.full.length();
+
   return output;
 }
 
 // Direct Match
 token DirectMatch(string binary, int index) {
   token output;
+
+  // set the rank of the command
+  output.rank = PatternToRank(DIRECT);
+
+  // the original binary for the token
+  output.original = binary;
+
+  // command string
+  output.command = "111";
+
+  // add dictionary index
+  bitset<4> ind    = index;
+  output.dictIndex = ind.to_string();
+
+  // generate the full command
+  output.full = output.command + output.dictIndex;
+
+  // get the length of the command
+  output.length = output.full.length();
+
   return output;
 }
 
@@ -509,8 +702,8 @@ void CompressBinary() {
 
   string previousBinary;
   // itterate over the file
-  for (auto it=fileInput.begin(); it < fileInput.end(); it++) {
-    
+  for (auto it = fileInput.begin(); it < fileInput.end(); it++) {
+
     string binary = *it;
 
     // possible compression candidates
@@ -531,7 +724,6 @@ void CompressBinary() {
 
     // TODO: RLE and Bitmask HERE
     // for RLE: copy itterator to function to perform look ahead
-
 
     // sort the candidates vector by smallest length
     sort(candidates.begin(), candidates.end(), LeastCompression);
