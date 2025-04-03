@@ -891,7 +891,7 @@ string ApplyBitmask(string binary, string bitmask, int location) {
   bitset<BITMASK_LENGTH> bmask = mask;
   
   // apply the bitmask
-  output = output & bmask;
+  output = output ^ bmask;
   
   // replace the portion of the binary with the new bitmasked portion
   binary.replace(location, BITMASK_LENGTH, output.to_string());
@@ -940,6 +940,7 @@ token DBitmask(string::iterator cursor) {
   
   // get the bitmask
   string bitmask(cursor + 3 + 5, cursor + 3 + 5 + 4);
+  output.bitmask = bitmask;
 
   // get the dictionary Index
   string dictIndex(cursor + 3 + 5 + 4, cursor + length);
@@ -954,6 +955,7 @@ token DBitmask(string::iterator cursor) {
   output.original = original;
   
   return output;
+  //TODO BUG: line 89 on compression is choosing index 2 instead of index 4 (all 0000s)
 } // END DBitmask
 
 token D1BitMis(string::iterator cursor) {
@@ -1167,8 +1169,8 @@ token Decider(PATTERNS command, string::iterator cursor) {
     return DOriginal(cursor);
   //case RLE:
     //return DRLE(cursor);
-  //case BITMASK:
-    //return DBitmask(cursor);
+  case BITMASK:
+    return DBitmask(cursor);
   case ONEBIT:
     return D1BitMis(cursor);
   case TWOBITC:
