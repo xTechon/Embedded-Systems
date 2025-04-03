@@ -844,10 +844,30 @@ void CompressBinary() {
 
 // #endregion
 
+// #beginregion --- Decompression Tokenizer ---
+string CombineFile(vector<string> input) {
+  string output;
+  for (auto line : input){
+    output.append(line);
+  }
+  return output;
+} // END CombineFile
+
+
+// #endregion
+
 // #beginregion --- Decompression Function ---
 
 // Decompresses the Binary using the global scoped fileInput variable
 void DecompressBinary() {
+
+  // import the dictionary
+  ImportDictionary(dictImport);
+  
+  // turn the imported file into one large string
+  string program = CombineFile(fileInput);
+  
+  // tokenize the string
 
   // Make sure file has the correct name
   fileOutputName = decompressionOutput;
