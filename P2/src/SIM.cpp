@@ -707,11 +707,9 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
       break;
 
     case 3:
-      // Use bitmasking, can't do 3
-      // TODO: add bitmasking to mismatch
+      // Use bitmasking, skip temp
       temp.length = -1;
       break;
-
     case 2:
       // 2-bit Mismatch
       // can be consecutive or arbitrary
@@ -734,6 +732,12 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
       temp = DirectMatch(input, entry.index);
       break;
     }
+
+    // only use bitmasking if there is at least 1 mismatch
+    if (entry.mismatch != 0) bitmasking = BitmaskingCompression(input, entry.index, entry.mismatch);
+
+    // only append the bitmask token if there were no errors
+    if (bitmasking.length != -1) possibleCompressions.push_back(bitmasking);
 
     // error, skip token
     if (temp.length == -1) continue;
