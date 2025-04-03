@@ -1,4 +1,5 @@
 // I have neither given nor received any unauthorized aid on this assignment
+#include <bitset>
 #include <fstream>
 #include <iterator>
 #include <ostream>
@@ -91,6 +92,7 @@ string dictionary[DICTIONARY_SIZE]; // format the binaries for easier debugging
 struct token
 {
   int length;       // store the length of the compression
+  int rank;         // rank of the command
   string original;  // the original binary string
   string command;   // 3-bit command string
   string SL;        // 5-bit Starting location or first mismatch location
@@ -392,7 +394,6 @@ token TwoBitMismatch(string binary, int index) {
   return output;
 }
 
-
 // 4-bit consecutive mismatch
 token FourBitMismatch(string binary, int index) {
   token output;
@@ -404,7 +405,6 @@ token FourBitMismatch(string binary, int index) {
   }
   return output;
 }
-
 
 // 2-bit anywhere mismatch
 token Arbitrary2Mismatch(string binary, int index) {
@@ -418,13 +418,11 @@ token Arbitrary2Mismatch(string binary, int index) {
   return output;
 }
 
-
 // Direct Match
 token DirectMatch(string binary, int index) {
   token output;
   return output;
 }
-
 
 // Mismatch function decider
 // Given a vector input of a binary and dictionary entries
@@ -494,11 +492,50 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
 
 // #beginregion --- Compression Function ---
 
+// sort based on smallest compression followed by smallest rank
+bool LeastCompression(token i, token j) {
+  bool len      = i.length < j.length;
+  bool conflict = i.length == j.length;
+
+  if (conflict) return i.rank < j.rank;
+  else return len;
+}
+
 // Compresses the Binary using the global scoped fileInput variable
 void CompressBinary() {
 
   // generate the dictionary from the file
   GenerateDictionary(fileInput);
+
+  string previousBinary;
+  // itterate over the file
+  for (auto it=fileInput.begin(); it < fileInput.end(); it++) {
+    
+    string binary = *it;
+
+    // possible compression candidates
+    vector<token> candidates;
+
+    // add the mismatch compression candidates
+    // calculate the mismatch numbers of each entry in the dictionary
+    vector<int> dictMismatches = CalculateDictionaryMismatch(binary);
+
+    // filter the mismatches down to what is possible to compress
+    vector<dictMatch> dictFiltered = FilterDictionary(dictMismatches, 4);
+
+    // get the tokens of mismatch possibilities
+    vector<token> mismatches = DecideMismatches(binary, dictFiltered);
+
+    // add the mismatch tokens to the candidates vector
+    candidates.insert(candidates.begin(), mismatches.begin(), mismatches.end());
+
+    // TODO: RLE and Bitmask HERE
+    // for RLE: copy itterator to function to perform look ahead
+
+
+    // sort the candidates vector by smallest length
+    sort(candidates.begin(), candidates.end(), LeastCompression);
+  }
 
   // Make sure file has the correct name
   fileOutputName = compressionOutput;
