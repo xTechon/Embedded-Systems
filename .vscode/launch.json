@@ -35,7 +35,7 @@
             "args": [
                 "1",
                 "${workspaceFolder}/P2/Sample_input/correct_original.txt",
-                "${workspaceFolder}/P2/Sample_output/compressed.txt",
+                "${workspaceFolder}/P2/Sample_output/cout.txt",
             ],
             "cwd": "${workspaceFolder}/P2",
             "preLaunchTask": "BuildP2CPP"
@@ -48,7 +48,7 @@
             "args": [
                 "2",
                 "${workspaceFolder}/P2/Sample_output/correct_compressed.txt",
-                "${workspaceFolder}/P2/Sample_input/original.txt",
+                "${workspaceFolder}/P2/Sample_input/dout.txt",
             ],
             "cwd": "${workspaceFolder}/P2",
             "preLaunchTask": "BuildP2CPP"
