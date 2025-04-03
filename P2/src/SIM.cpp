@@ -968,6 +968,10 @@ token D1BitMis(string::iterator cursor) {
 
   // add the rank of the token
   output.rank = PatternToRank(ONEBIT);
+  
+  // add the command of the binary
+  string com(cursor, cursor+3);
+  output.command = com;
 
   // add the length of the token
   output.length = length;
