@@ -94,6 +94,7 @@ struct token
 {
   int length;       // store the length of the compression
   int rank;         // rank of the command
+  int dictIn;       // dictionary index as integer
   string original;  // the original binary string
   string command;   // 3-bit command string
   string SL;        // 5-bit Starting location or first mismatch location
@@ -732,6 +733,9 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
       temp = DirectMatch(input, entry.index);
       break;
     }
+    
+    // always add the dictioanry index as a int as well for debugging
+    temp.dictIn = entry.index;
 
     // only use bitmasking if there is at least 1 mismatch
     if (entry.mismatch != 0) bitmasking = BitmaskingCompression(input, entry.index, entry.mismatch);
