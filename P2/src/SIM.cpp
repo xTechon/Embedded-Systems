@@ -352,19 +352,38 @@ pair<int, int> TwoBitLocations(string binary, string entry) {
 // All compression functions should return a token
 
 // 1-bit Mismatch
-token OneBitMismatch(string binary, string entry) {
+token OneBitMismatch(string binary, int index) {
   token output;
+  string entry = dictionary[index];
   int location = MismatchLocation(binary, entry, 1);
+
+  // return error if any
   if (location == -1) {
     output.length = -1;
     return output;
   }
+
+  // add command string
+  output.command = "011";
+
+  // add mismatch location
+  bitset<5> loc = location;
+  output.SL     = loc.to_string();
+
+  // add dictionary index
+  bitset<4> ind    = index;
+  output.dictIndex = ind.to_string();
+
+  // add the original binary to the token
+  output.original = binary;
+
   return output;
 }
 
 // 2-bit consecutive mismatch
-token TwoBitMismatch(string binary, string entry){
+token TwoBitMismatch(string binary, int index) {
   token output;
+  string entry = dictionary[index];
   int location = MismatchLocation(binary, entry, 2);
   if (location == -1) {
     output.length = -1;
@@ -375,8 +394,9 @@ token TwoBitMismatch(string binary, string entry){
 
 
 // 4-bit consecutive mismatch
-token FourBitMismatch(string binary, string entry){
+token FourBitMismatch(string binary, int index) {
   token output;
+  string entry = dictionary[index];
   int location = MismatchLocation(binary, entry, 4);
   if (location == -1) {
     output.length = -1;
@@ -387,8 +407,9 @@ token FourBitMismatch(string binary, string entry){
 
 
 // 2-bit anywhere mismatch
-token Arbitrary2Mismatch(string binary, string entry){
+token Arbitrary2Mismatch(string binary, int index) {
   token output;
+  string entry = dictionary[index];
   int location = MismatchLocation(binary, entry, 2);
   if (location != -1) {
     output.length = -1;
@@ -399,7 +420,7 @@ token Arbitrary2Mismatch(string binary, string entry){
 
 
 // Direct Match
-token DirectMatch(string binary, string entry){
+token DirectMatch(string binary, int index) {
   token output;
   return output;
 }
@@ -426,19 +447,20 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
 
     case 4:
       // 4-bit consecutive only
-      temp = FourBitMismatch(input, dictionary[entry.index]);
+      temp = FourBitMismatch(input, entry.index);
       break;
 
     case 3:
       // Use bitmasking, can't do 3
       // TODO: add bitmasking to mismatch
+      temp.length = -1;
       break;
 
     case 2:
       // 2-bit Mismatch
       // can be consecutive or arbitrary
-      temp  = TwoBitMismatch(input, dictionary[entry.index]);
-      temp2 = Arbitrary2Mismatch(input, dictionary[entry.index]);
+      temp  = TwoBitMismatch(input, entry.index);
+      temp2 = Arbitrary2Mismatch(input, entry.index);
 
       // skip error from temp2
       if (temp2.length == -1) break;
@@ -448,12 +470,12 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
 
     case 1:
       // 1-bit Mismatch
-      temp = OneBitMismatch(input, dictionary[entry.index]);
+      temp = OneBitMismatch(input, entry.index);
       break;
 
     case 0:
       // Direct match
-      temp = DirectMatch(input, dictionary[entry.index]);
+      temp = DirectMatch(input, entry.index);
       break;
     }
 
