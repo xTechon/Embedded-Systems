@@ -19,7 +19,7 @@ string compressionOutput   = "cout.txt";
 string decompressionInput  = "compressed.txt";
 string decompressionOutput = "dout.txt";
 string fileOutputName      = compressionOutput;
-vector<string> fileOutput; // contains the cycles for the file output
+vector<string> fileOutput; // contains the lines for the file output
 vector<string> fileInput;  // contains an itterable of the 32-bit lines of the file only
 vector<string> dictImport; // stores the raw dictionary information
 const int DICTIONARY_SIZE = 16;
@@ -34,6 +34,7 @@ int mode                  = 0;
 void ParseFile();                 // parse the file regarless of mode
 void CompressBinary();            // compression function containing relevant logic
 void DecompressBinary();          // decompression function containing relevant logic
+void CompileTokens();             // Turn the tokens into 32-bit strings based on mode
 void OutputFile(string filePath); // output file regarless of mode
 
 // #endregion
@@ -61,6 +62,7 @@ int main(int argc, char* argv[]) {
   // parse and load the file into memory
   ParseFile();
 
+  // create tokens of the file based on mode
   if (mode == 1) {
     // compression function
     CompressBinary();
@@ -68,6 +70,9 @@ int main(int argc, char* argv[]) {
     // decompression function
     DecompressBinary();
   }
+  
+  // compile the tokens to a useable format for the output function
+  CompileTokens();
 
   // write to file regardless of mode
   OutputFile(fileOutputName);
@@ -112,6 +117,8 @@ struct dictMatch
 };
 
 enum PATTERNS { ORIGNIAL, RLE, BITMASK, ONEBIT, TWOBITC, FOURBIT, TWOBITA, DIRECT };
+
+vector<token> preProcessedOutput; // a vector of tokens to either compress or decompress
 
 // #endregion
 
@@ -734,13 +741,13 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
       temp = DirectMatch(input, entry.index);
       break;
     }
-    
+
     // always add the dictioanry index as a int as well for debugging
     temp.dictIn = entry.index;
 
     // only use bitmasking if there is at least 1 mismatch
     if (entry.mismatch != 0) bitmasking = BitmaskingCompression(input, entry.index, entry.mismatch);
-    
+
     bitmasking.dictIn = entry.index;
 
     // only append the bitmask token if there were no errors
@@ -761,6 +768,23 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
 
 // #beginregion --- Compression Function ---
 
+// provide the case where no compression is performed
+token NoCompression(string binary) {
+  token output;
+  // get the command and rank of the token
+  output.command = PatternToStringBinary(ORIGNIAL);
+  output.rank    = PatternToRank(ORIGNIAL);
+
+  // get the original binary string
+  output.original = binary;
+
+  // create the full "compressed" string and its length
+  output.full   = output.command + output.original;
+  output.length = output.full.length();
+
+  return output;
+}
+
 // sort based on smallest compression followed by smallest rank
 bool LeastCompression(token i, token j) {
   bool len      = i.length < j.length;
@@ -776,6 +800,7 @@ void CompressBinary() {
   // generate the dictionary from the file
   GenerateDictionary(fileInput);
 
+  int counter = 0; // for debugging
   string previousBinary;
   // itterate over the file
   for (auto it = fileInput.begin(); it < fileInput.end(); it++) {
@@ -798,11 +823,19 @@ void CompressBinary() {
     // add the mismatch tokens to the candidates vector
     candidates.insert(candidates.begin(), mismatches.begin(), mismatches.end());
 
-    // TODO: RLE and Bitmask HERE
+    // TODO: RLE
     // for RLE: copy itterator to function to perform look ahead
+
+    // Always have a case where no compression is performed
+    candidates.push_back(NoCompression(binary));
 
     // sort the candidates vector by smallest length
     sort(candidates.begin(), candidates.end(), LeastCompression);
+
+    // add the top candidate to the pre processed output
+    preProcessedOutput.push_back(candidates[0]);
+
+    counter++;
   }
 
   // Make sure file has the correct name
@@ -819,5 +852,81 @@ void DecompressBinary() {
   // Make sure file has the correct name
   fileOutputName = decompressionOutput;
 }
+
+// #endregion
+
+// #beginregion --- Token to File Functions ---
+
+string CompileCompressedString(vector<token> input) {
+
+  string output;
+
+  // make one giant string
+  for (auto binary : input) {
+    output.append(binary.full);
+  }
+
+  return output;
+} // END CompileCompressedString
+
+string CompileDecompressedString(vector<token> input) {
+
+  string output;
+
+  // make one giant string
+  for (auto binary : input) {
+    output.append(binary.original);
+  }
+
+  return output;
+} // END CompileDecompressedString
+
+void AddDictionary() {
+  fileOutput.push_back("xxxx");
+  for (int i = 0; i < DICTIONARY_SIZE; i++){
+    fileOutput.push_back(dictionary[i]);
+  }
+} // END AddDictionary
+
+// process for compiling the tokens to a file is the same
+// only difference is the string field used
+void CompileTokens() {
+  // contain all tokens' full output as one string
+  string rawOutput;
+
+  if (mode == 1) {
+    rawOutput = CompileCompressedString(preProcessedOutput);
+  } else if (mode == 2) {
+    rawOutput = CompileDecompressedString(preProcessedOutput);
+  }
+
+  // split giant string into 32-length chuncks
+
+  // get the number of chuncks needed
+  int substrings = rawOutput.length() / BINARY_SIZE;
+
+  // split and feed the string into the file output vector
+  for (int i = 0; i < substrings; i++) {
+    fileOutput.push_back(rawOutput.substr(i * BINARY_SIZE, BINARY_SIZE));
+  }
+
+  // pad the last line with zeroes if needed
+  if (rawOutput.length() % BINARY_SIZE != 0) {
+
+    // get the remaining bits
+    string last = rawOutput.substr(substrings * BINARY_SIZE);
+
+    // pad with zeroes until it matches the length
+    while (last.length() != BINARY_SIZE)
+      last.append("0");
+
+    // add the last line to the file output
+    fileOutput.push_back(last);
+  }
+  
+  // add the dictionary to the file output if in compressed mode
+  if (mode == 1) AddDictionary();
+
+} // END TokenToFile
 
 // #endregion
