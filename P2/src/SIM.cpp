@@ -331,6 +331,47 @@ pair<int, string> GenerateBitmask(string binary, string entry, int numMis, int b
   return output;
 } // END GenerateBitmask
 
+token BitmaskingCompression(string binary, int index, int mismatches) {
+  token output;
+  string entry = dictionary[index];
+
+  // get a bitmask if any are possible
+  pair<int, string> bitmask = GenerateBitmask(binary, entry, mismatches, BITMASK_LENGTH);
+
+  // return with error if bitmask is not possible
+  if (bitmask.first == -1) {
+    output.length = -1;
+    return output;
+  }
+
+  // add command string
+  output.command = PatternToStringBinary(BITMASK);
+
+  // rank from pdf
+  output.rank = PatternToRank(BITMASK);
+
+  // add starting location
+  bitset<5> loc = bitmask.first;
+  output.SL     = loc.to_string();
+
+  // add dictionary index
+  bitset<4> ind    = index;
+  output.dictIndex = ind.to_string();
+
+  // add bitmask
+  output.bitmask = bitmask.second;
+
+  // add the original binary to the token
+  output.original = binary;
+
+  // generate the full pattern
+  output.full = output.command + output.SL + output.bitmask + output.dictIndex;
+
+  // get the length of the full command
+  output.length = output.full.length();
+
+  return output;
+} // END Bitmasking
 
 // #endregion
 
