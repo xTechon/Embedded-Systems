@@ -47,7 +47,7 @@
             "program": "${workspaceFolder}/P2/bin/SIM",
             "args": [
                 "2",
-                "${workspaceFolder}/P2/Sample_output/cout.txt",
+                "${workspaceFolder}/P2/Sample_output/correct_compressed.txt",
                 "${workspaceFolder}/P2/Sample_input/dout.txt",
             ],
             "cwd": "${workspaceFolder}/P2",
