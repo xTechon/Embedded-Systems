@@ -93,20 +93,23 @@ map<string, dictVal> dictMap;       // collect stats for each binary
 vector<dictVal> dictVect;           // sort the binaries based on stats
 string dictionary[DICTIONARY_SIZE]; // format the binaries for easier debugging
 
+enum PATTERNS { ORIGNIAL, RLE, BITMASK, ONEBIT, TWOBITC, FOURBIT, TWOBITA, DIRECT };
+
 // token used for both compression and decompression
 // errors place -1 in the length field
 struct token
 {
+  PATTERNS method;  // Debugabble compression method
+  string full;      // the entire compressed binary string
   int length;       // store the length of the compression
   int rank;         // rank of the command
   int dictIn;       // dictionary index as integer
-  string original;  // the original binary string
   string command;   // 3-bit command string
+  string original;  // the original binary string
   string SL;        // 5-bit Starting location or first mismatch location
   string ML2;       // 5-bit 2nd Mismatch location
   string bitmask;   // 4-bit bitmask
   string dictIndex; // 4-bit index of the related dictionary entry
-  string full;      // the entire compressed binary string
 };
 
 // tracks the mismatches of a binary and a specific dictionary entry
@@ -115,8 +118,6 @@ struct dictMatch
   int index;
   int mismatch;
 };
-
-enum PATTERNS { ORIGNIAL, RLE, BITMASK, ONEBIT, TWOBITC, FOURBIT, TWOBITA, DIRECT };
 
 vector<token> preProcessedOutput; // a vector of tokens to either compress or decompress
 
@@ -359,7 +360,7 @@ pair<int, string> GenerateBitmask(string binary, string entry, int numMis, int b
   bool maskStart          = false;
 
   // itterate over length of binary - bitmask length
-  for (int i = 0; i < (BINARY_SIZE - bitLength); i++) {
+  for (int i = 0; i < BINARY_SIZE; i++) {
     // maximum lenght of bitmask, exit
     if (remainingDist == 0) break;
 
@@ -371,6 +372,7 @@ pair<int, string> GenerateBitmask(string binary, string entry, int numMis, int b
       maskStart = true;
       bitmask.append("1");
       remainingMismatches--;
+      remainingDist--;
       continue;
     }
 
@@ -403,6 +405,8 @@ token BitmaskingCompression(string binary, int index, int mismatches) {
   // get a bitmask if any are possible
   pair<int, string> bitmask = GenerateBitmask(binary, entry, mismatches, BITMASK_LENGTH);
 
+  output.method = BITMASK;
+
   // return with error if bitmask is not possible
   if (bitmask.first == -1) {
     output.length = -1;
@@ -422,6 +426,7 @@ token BitmaskingCompression(string binary, int index, int mismatches) {
   // add dictionary index
   bitset<4> ind    = index;
   output.dictIndex = ind.to_string();
+  output.dictIn    = index;
 
   // add bitmask
   output.bitmask = bitmask.second;
@@ -545,6 +550,8 @@ token TokenPreamble(string binary, int index, PATTERNS command, bool skipCheck =
   token output;
   string entry = dictionary[index];
   int location = MismatchLocation(binary, entry, PatternToNumMismatch(command));
+
+  output.method = command;
 
   // return error if any, unless skipCheck is flagged
   if (location == -1 && !skipCheck) {
@@ -688,7 +695,6 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
 
       // skip error from temp2
       if (temp2.length == -1) break;
-      temp2.dictIn = entry.index;
       // make sure 2nd token is added
       possibleCompressions.push_back(temp2);
       break;
@@ -704,13 +710,8 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
       break;
     }
 
-    // always add the dictioanry index as a int as well for debugging
-    temp.dictIn = entry.index;
-
     // only use bitmasking if there is at least 1 mismatch
     if (entry.mismatch != 0) bitmasking = BitmaskingCompression(input, entry.index, entry.mismatch);
-
-    bitmasking.dictIn = entry.index;
 
     // only append the bitmask token if there were no errors
     if (bitmasking.length != -1) possibleCompressions.push_back(bitmasking);
@@ -733,7 +734,9 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
 // provide the case where no compression is performed
 token NoCompression(string binary) {
   token output;
+
   // get the command and rank of the token
+  output.method  = ORIGNIAL;
   output.command = PatternToStringBinary(ORIGNIAL);
   output.rank    = PatternToRank(ORIGNIAL);
 
@@ -762,7 +765,7 @@ void CompressBinary() {
   // generate the dictionary from the file
   GenerateDictionary(fileInput);
 
-  int counter           = 0; // for debugging
+  int counter           = 1; // for debugging
   string previousBinary = "";
   // itterate over the file
   for (auto it = fileInput.begin(); it < fileInput.end(); it++) {
@@ -787,7 +790,7 @@ void CompressBinary() {
 
     // TODO: RLE
     // for RLE: copy itterator to function to perform look ahead
-    if (previousBinary == binary) printf("cool"); // run RLE
+    // if (previousBinary == binary) printf("cool"); // run RLE
 
     // Always have a case where no compression is performed
     candidates.push_back(NoCompression(binary));
@@ -796,11 +799,10 @@ void CompressBinary() {
     sort(candidates.begin(), candidates.end(), LeastCompression);
 
     previousBinary = binary;
+    counter++; // Debuging
 
     // add the top candidate to the pre processed output
     preProcessedOutput.push_back(candidates[0]);
-
-    counter++;
   }
 
   // Make sure file has the correct name
