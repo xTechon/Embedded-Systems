@@ -104,6 +104,7 @@ struct token
   int length;       // store the length of the compression
   int rank;         // rank of the command
   int dictIn;       // dictionary index as integer
+  int rle;          // used for RLE
   string command;   // 3-bit command string
   string original;  // the original binary string
   string SL;        // 5-bit Starting location or first mismatch location
@@ -120,6 +121,9 @@ struct dictMatch
 };
 
 vector<token> preProcessedOutput; // a vector of tokens to either compress or decompress
+
+// for debugging, tracks the current line before it's added to preprocessor
+int line = 1;
 
 // #endregion
 
@@ -729,6 +733,73 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
 
 // #endregion
 
+// #beginregion --- RLE Compression Functions ---
+
+// given the current posion in the file and the previous token
+// check if RLE encoding is possible and return valid tokens if possible
+// returns a pair where the first value is the number of occurences of the
+// current token and the second value is a vector of tokens to insert.
+// otherwise, return {1, an empty vector}
+pair<int, vector<token>> RunLengthEncoding(vector<string>::iterator cursor, token input) {
+  vector<token> output;
+
+  // used to count the number of times the current token appears consecutively
+  int counter = 0;
+
+  // keep counting the repetions of the token until there are no more repetions
+  while (*cursor == input.original) {
+    counter++;
+    cursor++;
+  }
+
+  // exit with nothing if RLE was not possible
+  if (counter <= 1) return {counter, output};
+
+  // get the number of RLE tokens needed
+  int chuncks = counter / 9;
+
+  // create a maximum length rle token to be reused
+  token rleToken   = input;
+  rleToken.command = PatternToStringBinary(RLE);
+  rleToken.rank    = PatternToRank(RLE);
+  rleToken.method  = RLE;
+  rleToken.length  = 6; // RLE tokens are always 6 length
+  rleToken.rle     = 7; // count the number of occurances as index format
+
+  bitset<3> rleBitwise = rleToken.rle;
+  rleToken.full        = rleToken.command + rleBitwise.to_string();
+
+  // create tokens for each segment needed
+  for (int i = 0; i < chuncks; i++) {
+    output.push_back(input);
+    output.push_back(rleToken);
+  }
+
+  // add remaining amount if needed
+  int remainder = counter % 9;
+
+  if (remainder != 0) {
+    // always start with the original token
+    output.push_back(input);
+
+    // add another RLE token if needed
+    if (remainder > 1) {
+
+      // modify the token for the remainder
+      // -2, one for original token, one to account for indexing
+      rleToken.rle  = remainder - 2;
+      rleBitwise    = rleToken.rle;
+      rleToken.full = rleToken.command + rleBitwise.to_string();
+
+      output.push_back(rleToken);
+    }
+  }
+
+  return {counter, output};
+} // END RunLengthEncoding
+
+// #endregion
+
 // #beginregion --- Compression Function ---
 
 // provide the case where no compression is performed
@@ -765,8 +836,6 @@ void CompressBinary() {
   // generate the dictionary from the file
   GenerateDictionary(fileInput);
 
-  int counter           = 1; // for debugging
-  string previousBinary = "";
   // itterate over the file
   for (auto it = fileInput.begin(); it < fileInput.end(); it++) {
 
@@ -788,18 +857,29 @@ void CompressBinary() {
     // add the mismatch tokens to the candidates vector
     candidates.insert(candidates.begin(), mismatches.begin(), mismatches.end());
 
-    // TODO: RLE
-    // for RLE: copy itterator to function to perform look ahead
-    // if (previousBinary == binary) printf("cool"); // run RLE
-
     // Always have a case where no compression is performed
     candidates.push_back(NoCompression(binary));
 
     // sort the candidates vector by smallest length
     sort(candidates.begin(), candidates.end(), LeastCompression);
 
-    previousBinary = binary;
-    counter++; // Debuging
+    // for RLE: copy itterator to function to perform look ahead
+    // always run a check for RLE on every command
+    pair<int, vector<token>> rle = RunLengthEncoding(it, candidates[0]);
+
+    // if the rle is not empty,
+    if (rle.first > 1) {
+      // insert the vector to the end of the preProcessor
+      preProcessedOutput.insert(preProcessedOutput.end(), rle.second.begin(), rle.second.end());
+      // make sure the line counter still matches
+      line += rle.first;
+      // jump the itterator
+      it += rle.first - 1;
+      // skip the rest of the loop
+      continue;
+    }
+
+    line++; // Debuging
 
     // add the top candidate to the pre processed output
     preProcessedOutput.push_back(candidates[0]);
