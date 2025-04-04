@@ -315,6 +315,27 @@ PATTERNS StringBinaryToPattern(string command) {
   return ORIGNIAL;
 } // END StringBinaryToPattern
 
+int PatternToNumMismatch(PATTERNS input) {
+  switch (input) {
+  case ORIGNIAL:
+    return 0;
+  case RLE:
+    return 0;
+  case BITMASK:
+    return 4;
+  case ONEBIT:
+    return 1;
+  case TWOBITC:
+    return 2;
+  case FOURBIT:
+    return 4;
+  case TWOBITA:
+    return 2;
+  case DIRECT:
+    return 0;
+  }
+}
+
 // #endregion
 
 // #beginregion --- Bitmasking Functions ---
@@ -519,6 +540,42 @@ pair<int, int> TwoBitLocations(string binary, string entry) {
   return locations;
 } // END TwoBitLocations
 
+// function to run for all mismatch functions
+token TokenPreamble(string binary, int index, PATTERNS command, bool skipCheck = false) {
+  token output;
+  string entry = dictionary[index];
+  int location = MismatchLocation(binary, entry, PatternToNumMismatch(command));
+
+  // return error if any, unless skipCheck is flagged
+  if (location == -1 && !skipCheck) {
+    output.length = -1;
+    return output;
+  }
+
+  // fields that are in every token
+  output.command  = PatternToStringBinary(command);
+  output.rank     = PatternToRank(command);
+  output.original = binary;
+
+  // add mismatch location, there's always at least one
+  bitset<5> loc = location;
+  output.SL     = loc.to_string();
+
+  // there's always a dictionary index
+  // store the dictionary index as both integer and string
+  bitset<4> ind    = index;
+  output.dictIndex = ind.to_string();
+  output.dictIn    = index;
+
+  // generate the full pattern
+  output.full = output.command + output.SL + output.dictIndex;
+
+  // get the length of the full command
+  output.length = output.full.length();
+
+  return output;
+}
+
 // #endregion
 
 // #beginregion --- Bit Mismatch Compression Functions ---
@@ -527,37 +584,9 @@ pair<int, int> TwoBitLocations(string binary, string entry) {
 // 1-bit Mismatch
 token OneBitMismatch(string binary, int index) {
   token output;
-  string entry = dictionary[index];
-  int location = MismatchLocation(binary, entry, 1);
 
-  // return error if any
-  if (location == -1) {
-    output.length = -1;
-    return output;
-  }
-
-  // add command string
-  output.command = PatternToStringBinary(ONEBIT);
-
-  // rank from pdf
-  output.rank = PatternToRank(ONEBIT);
-
-  // add mismatch location
-  bitset<5> loc = location;
-  output.SL     = loc.to_string();
-
-  // add dictionary index
-  bitset<4> ind    = index;
-  output.dictIndex = ind.to_string();
-
-  // add the original binary to the token
-  output.original = binary;
-
-  // generate the full pattern
-  output.full = output.command + output.SL + output.dictIndex;
-
-  // get the length of the full command
-  output.length = output.full.length();
+  // errors will get carried out of the function
+  output = TokenPreamble(binary, index, ONEBIT);
 
   return output;
 }
@@ -565,37 +594,8 @@ token OneBitMismatch(string binary, int index) {
 // 2-bit consecutive mismatch
 token TwoBitMismatch(string binary, int index) {
   token output;
-  string entry = dictionary[index];
-  int location = MismatchLocation(binary, entry, 2);
 
-  // return error if any
-  if (location == -1) {
-    output.length = -1;
-    return output;
-  }
-
-  // add command string
-  output.command = PatternToStringBinary(TWOBITC);
-
-  // rank from pdf
-  output.rank = PatternToRank(TWOBITC);
-
-  // add mismatch location
-  bitset<5> loc = location;
-  output.SL     = loc.to_string();
-
-  // add dictionary index
-  bitset<4> ind    = index;
-  output.dictIndex = ind.to_string();
-
-  // add the original binary to the token
-  output.original = binary;
-
-  // generate the full pattern
-  output.full = output.command + output.SL + output.dictIndex;
-
-  // get the length of the full command
-  output.length = output.full.length();
+  output = TokenPreamble(binary, index, TWOBITC);
 
   return output;
 }
@@ -603,37 +603,8 @@ token TwoBitMismatch(string binary, int index) {
 // 4-bit consecutive mismatch
 token FourBitMismatch(string binary, int index) {
   token output;
-  string entry = dictionary[index];
-  int location = MismatchLocation(binary, entry, 4);
 
-  // return error if any
-  if (location == -1) {
-    output.length = -1;
-    return output;
-  }
-
-  // add command string
-  output.command = PatternToStringBinary(FOURBIT);
-
-  // rank from pdf
-  output.rank = PatternToRank(FOURBIT);
-
-  // add mismatch location
-  bitset<5> loc = location;
-  output.SL     = loc.to_string();
-
-  // add dictionary index
-  bitset<4> ind    = index;
-  output.dictIndex = ind.to_string();
-
-  // add the original binary to the token
-  output.original = binary;
-
-  // generate the full pattern
-  output.full = output.command + output.SL + output.dictIndex;
-
-  // get the length of the full command
-  output.length = output.full.length();
+  output = TokenPreamble(binary, index, FOURBIT);
 
   return output;
 }
@@ -641,17 +612,13 @@ token FourBitMismatch(string binary, int index) {
 // 2-bit anywhere mismatch
 token Arbitrary2Mismatch(string binary, int index) {
   token output;
-  string entry = dictionary[index];
+
+  output = TokenPreamble(binary, index, TWOBITA, true);
 
   // get the locations for the mismatches
-  pair<int, int> locations = TwoBitLocations(binary, entry);
+  pair<int, int> locations = TwoBitLocations(binary, dictionary[index]);
 
-  // add command string
-  output.command = PatternToStringBinary(TWOBITA);
-
-  // rank from pdf
-  output.rank = PatternToRank(TWOBITA);
-
+  // override what's provided by the token
   // add mismatch location 1
   bitset<5> loc = locations.first;
   output.SL     = loc.to_string();
@@ -659,13 +626,6 @@ token Arbitrary2Mismatch(string binary, int index) {
   // add mismatch location 2
   bitset<5> loc2 = locations.second;
   output.ML2     = loc2.to_string();
-
-  // add dictionary index
-  bitset<4> ind    = index;
-  output.dictIndex = ind.to_string();
-
-  // add the original binary to the token
-  output.original = binary;
 
   // generate the full pattern
   output.full = output.command + output.SL + output.ML2 + output.dictIndex;
@@ -680,18 +640,7 @@ token Arbitrary2Mismatch(string binary, int index) {
 token DirectMatch(string binary, int index) {
   token output;
 
-  // set the rank of the command
-  output.rank = PatternToRank(DIRECT);
-
-  // the original binary for the token
-  output.original = binary;
-
-  // command string
-  output.command = PatternToStringBinary(DIRECT);
-
-  // add dictionary index
-  bitset<4> ind    = index;
-  output.dictIndex = ind.to_string();
+  output = TokenPreamble(binary, index, DIRECT, true);
 
   // generate the full command
   output.full = output.command + output.dictIndex;
@@ -813,8 +762,8 @@ void CompressBinary() {
   // generate the dictionary from the file
   GenerateDictionary(fileInput);
 
-  int counter = 0; // for debugging
-  string previousBinary;
+  int counter           = 0; // for debugging
+  string previousBinary = "";
   // itterate over the file
   for (auto it = fileInput.begin(); it < fileInput.end(); it++) {
 
@@ -838,12 +787,15 @@ void CompressBinary() {
 
     // TODO: RLE
     // for RLE: copy itterator to function to perform look ahead
+    if (previousBinary == binary) printf("cool"); // run RLE
 
     // Always have a case where no compression is performed
     candidates.push_back(NoCompression(binary));
 
     // sort the candidates vector by smallest length
     sort(candidates.begin(), candidates.end(), LeastCompression);
+
+    previousBinary = binary;
 
     // add the top candidate to the pre processed output
     preProcessedOutput.push_back(candidates[0]);
@@ -862,40 +814,40 @@ void CompressBinary() {
 // flips the bit of the binary
 // given the entire binary string and a location
 string FlipBit(string binary, int location) {
-  
+
   // get the digit from the string
   char digit = binary.at(location);
-  
+
   // flip the bit
   if (digit == '0') digit = '1';
   else if (digit == '1') digit = '0';
-  
+
   // replace the digit in the binary string
-  binary.replace(location, 1, 1,digit);
-  
+  binary.replace(location, 1, 1, digit);
+
   return binary;
 }
 
 // given a binary string, location, and a bitmask, apply the bitmask
 string ApplyBitmask(string binary, string bitmask, int location) {
-  
+
   int maskLength = bitmask.length();
 
   // get the portion of the binary string to apply a bitmask
   string target(binary.substr(location, maskLength));
-  
-  int tar = StringBinaryToInt(target);
+
+  int tar  = StringBinaryToInt(target);
   int mask = StringBinaryToInt(bitmask);
-  
+
   bitset<BITMASK_LENGTH> output = tar;
-  bitset<BITMASK_LENGTH> bmask = mask;
-  
+  bitset<BITMASK_LENGTH> bmask  = mask;
+
   // apply the bitmask
   output = output ^ bmask;
-  
+
   // replace the portion of the binary with the new bitmasked portion
   binary.replace(location, BITMASK_LENGTH, output.to_string());
-  
+
   return binary;
 }
 
@@ -921,23 +873,24 @@ token DOriginal(string::iterator cursor) {
 } // END DOriginal
 
 token DRLE(string::iterator cursor);
+
 token DBitmask(string::iterator cursor) {
   token output;
 
   int length = 3 + 5 + 4 + 4;
-  
+
   // token metadata
-  output.rank = PatternToRank(BITMASK);
+  output.rank    = PatternToRank(BITMASK);
   output.command = PatternToStringBinary(BITMASK);
-  output.length = length;
-  
-  string binary(cursor, cursor+length);
+  output.length  = length;
+
+  string binary(cursor, cursor + length);
   output.full = binary;
-  
+
   // get the location
   string loc(cursor + 3, cursor + 3 + 5);
   int location = StringBinaryToInt(loc);
-  
+
   // get the bitmask
   string bitmask(cursor + 3 + 5, cursor + 3 + 5 + 4);
   output.bitmask = bitmask;
@@ -945,17 +898,16 @@ token DBitmask(string::iterator cursor) {
   // get the dictionary Index
   string dictIndex(cursor + 3 + 5 + 4, cursor + length);
   int dictIn = StringBinaryToInt(dictIndex);
-  
-  
-  output.dictIn = dictIn;
+
+  output.dictIn    = dictIn;
   output.dictIndex = dictIndex;
 
   // get the original string
   string original = ApplyBitmask(dictionary[dictIn], bitmask, location);
   output.original = original;
-  
+
   return output;
-  //TODO BUG: line 89 on compression is choosing index 2 instead of index 4 (all 0000s)
+  // TODO BUG: line 89 on compression is choosing index 2 instead of index 4 (all 0000s)
 } // END DBitmask
 
 token D1BitMis(string::iterator cursor) {
@@ -968,9 +920,9 @@ token D1BitMis(string::iterator cursor) {
 
   // add the rank of the token
   output.rank = PatternToRank(ONEBIT);
-  
+
   // add the command of the binary
-  string com(cursor, cursor+3);
+  string com(cursor, cursor + 3);
   output.command = com;
 
   // add the length of the token
@@ -989,7 +941,7 @@ token D1BitMis(string::iterator cursor) {
   string dictIndex(cursor + 3 + 5, cursor + length);
   int dictIn = StringBinaryToInt(dictIndex);
 
-  output.dictIn = dictIn;
+  output.dictIn    = dictIn;
   output.dictIndex = dictIndex;
 
   // derive the original binary string
@@ -1028,12 +980,12 @@ token D2BitCMis(string::iterator cursor) {
   string dictIndex(cursor + 3 + 5, cursor + length);
   int dictIn = StringBinaryToInt(dictIndex);
 
-  output.dictIn = dictIn;
+  output.dictIn    = dictIn;
   output.dictIndex = dictIndex;
 
   // derive the original binary string
   original = FlipBit(dictionary[dictIn], location);
-  original = FlipBit(original, location+1);
+  original = FlipBit(original, location + 1);
 
   output.original = original;
 
@@ -1067,14 +1019,14 @@ token D4BitMis(string::iterator cursor) {
   string dictIndex(cursor + 3 + 5, cursor + length);
   int dictIn = StringBinaryToInt(dictIndex);
 
-  output.dictIn = dictIn;
+  output.dictIn    = dictIn;
   output.dictIndex = dictIndex;
 
   // derive the original binary string
   original = FlipBit(dictionary[dictIn], location);
-  original = FlipBit(original, location+1);
-  original = FlipBit(original, location+2);
-  original = FlipBit(original, location+3);
+  original = FlipBit(original, location + 1);
+  original = FlipBit(original, location + 2);
+  original = FlipBit(original, location + 3);
 
   output.original = original;
 
@@ -1082,7 +1034,7 @@ token D4BitMis(string::iterator cursor) {
 } // END D4BitMis
 
 token D2BitAMis(string::iterator cursor) {
-  
+
   token output;
   string original;
 
@@ -1105,14 +1057,14 @@ token D2BitAMis(string::iterator cursor) {
   int location = StringBinaryToInt(loc);
 
   // get the first location
-  string loc2(cursor + 3 + 5 , cursor + 3 + 5 + 5);
+  string loc2(cursor + 3 + 5, cursor + 3 + 5 + 5);
   int location2 = StringBinaryToInt(loc2);
 
   // get the dictionary index
   string dictIndex(cursor + 3 + 5 + 5, cursor + length);
   int dictIn = StringBinaryToInt(dictIndex);
 
-  output.dictIn = dictIn;
+  output.dictIn    = dictIn;
   output.dictIndex = dictIndex;
 
   // derive the original binary string
@@ -1125,29 +1077,29 @@ token D2BitAMis(string::iterator cursor) {
 } // END D2BitAMis
 
 token DDirect(string::iterator cursor) {
-  
-  token output;
-  
-  int length = 3 + 4;
-  
-  output.rank = PatternToRank(DIRECT);
-  output.command = PatternToStringBinary(DIRECT);
-  output.length = length;
 
-  string binary(cursor, cursor+length);
+  token output;
+
+  int length = 3 + 4;
+
+  output.rank    = PatternToRank(DIRECT);
+  output.command = PatternToStringBinary(DIRECT);
+  output.length  = length;
+
+  string binary(cursor, cursor + length);
   output.full = binary;
-  
+
   // get the dictionary Index
   string dictIndex(cursor + 3, cursor + length);
   int dictIn = StringBinaryToInt(dictIndex);
-  
-  output.dictIn = dictIn;
+
+  output.dictIn    = dictIn;
   output.dictIndex = dictIndex;
-  
+
   // derive the original binary string
-  
+
   output.original = dictionary[dictIn];
-  
+
   return output;
 } // END DDirect
 
@@ -1171,8 +1123,8 @@ token Decider(PATTERNS command, string::iterator cursor) {
   switch (command) {
   case ORIGNIAL:
     return DOriginal(cursor);
-  //case RLE:
-    //return DRLE(cursor);
+  // case RLE:
+  // return DRLE(cursor);
   case BITMASK:
     return DBitmask(cursor);
   case ONEBIT:
@@ -1212,7 +1164,7 @@ void Tokenizer(string program) {
 
     // put the token on the preprocessor
     preProcessedOutput.push_back(curToken);
-    
+
     // clear the command string before next itteration
     command.clear();
   }
