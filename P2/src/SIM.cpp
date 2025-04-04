@@ -936,11 +936,12 @@ string ApplyBitmask(string binary, string bitmask, int location) {
 token DOriginal(string::iterator cursor) {
   token output;
 
-  string binary;
-  string original;
+  string binary = "";
+  string original = "";
 
   // add the rank of the token
   output.rank = PatternToRank(ORIGNIAL);
+  output.method = ORIGNIAL;
 
   // get the full command
   output.full = binary.append(cursor, cursor + (3 + BINARY_SIZE));
@@ -948,7 +949,7 @@ token DOriginal(string::iterator cursor) {
   // list the length of the token
   output.length = output.full.length();
 
-  // derive the original binary string
+
   output.original = original.append(cursor + 3, cursor + (3 + BINARY_SIZE));
 
   return output;
@@ -1185,12 +1186,31 @@ string CombineFile(vector<string> input) {
   return output;
 } // END CombineFile
 
+// given a length, check if it will cause an overflow
+// returns true if there is an overflow
+bool CheckForOverflow(string::iterator cursor, string::iterator end, int length) {
+
+  // check to make sure a buffer overflow won't happen
+  // Buffer overflow at the end of the
+  auto test = cursor;
+  int counter = 0;
+  for (counter = 0; counter < length; counter++){
+    if (test != end) test++;
+    else break;
+  }
+  if (counter < length - 1) return true;
+  return false;
+}
+
 // call the correct decompression function based on the command
-token Decider(PATTERNS command, string::iterator cursor) {
+token Decider(PATTERNS command, string::iterator cursor, string::iterator end) {
   token output;
   output.length = -1;
+
+
   switch (command) {
   case ORIGNIAL:
+    if (CheckForOverflow(cursor, end, 3 + BINARY_SIZE)) return output;
     return DOriginal(cursor);
   case RLE:
     return DRLE(cursor);
@@ -1199,10 +1219,12 @@ token Decider(PATTERNS command, string::iterator cursor) {
   case ONEBIT:
     return D1BitMis(cursor);
   case TWOBITC:
+    if (CheckForOverflow(cursor, end, 12)) return output;
     return D2BitCMis(cursor);
   case FOURBIT:
     return D4BitMis(cursor);
   case TWOBITA:
+    if (CheckForOverflow(cursor, end, 17)) return output;
     return D2BitAMis(cursor);
   case DIRECT:
     return DDirect(cursor);
@@ -1224,7 +1246,10 @@ void Tokenizer(string program) {
     // convert to an enumerable
     curCommand = StringBinaryToPattern(command);
 
-    curToken = Decider(curCommand, it);
+    curToken = Decider(curCommand, it, program.end());
+    
+    // finished, padding will cause an error, leave before buffer overflow
+    if (curToken.length == -1) break;
 
     // jump the itterator by the length field
     it = it + curToken.length;
