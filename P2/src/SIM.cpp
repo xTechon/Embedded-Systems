@@ -954,7 +954,34 @@ token DOriginal(string::iterator cursor) {
   return output;
 } // END DOriginal
 
-token DRLE(string::iterator cursor);
+token DRLE(string::iterator cursor) {
+  token output;
+
+  int length = 3 + 3;
+
+  output.rank   = PatternToRank(RLE);
+  output.method = RLE;
+
+  // add the command of the binary
+  string com(cursor, cursor + 3);
+  output.command = com;
+
+  // add the length of the token
+  output.length = length;
+
+  string binary(cursor, cursor + length);
+
+  // get the rle index
+  string rle(cursor + 3, cursor + length);
+  int count = StringBinaryToInt(rle);
+
+  output.rle = count;
+
+  // get the full compressed binary string
+  output.full = binary;
+
+  return output;
+}
 
 token DBitmask(string::iterator cursor) {
   token output;
@@ -965,6 +992,7 @@ token DBitmask(string::iterator cursor) {
   output.rank    = PatternToRank(BITMASK);
   output.command = PatternToStringBinary(BITMASK);
   output.length  = length;
+  output.method  = BITMASK;
 
   string binary(cursor, cursor + length);
   output.full = binary;
@@ -992,16 +1020,15 @@ token DBitmask(string::iterator cursor) {
   // TODO BUG: line 89 on compression is choosing index 2 instead of index 4 (all 0000s)
 } // END DBitmask
 
-token D1BitMis(string::iterator cursor) {
+token DecompPreamble(string::iterator cursor, PATTERNS command) {
   token output;
-
-  string original;
 
   // command + location + dictionary index
   int length = 3 + 5 + 4;
 
   // add the rank of the token
-  output.rank = PatternToRank(ONEBIT);
+  output.rank   = PatternToRank(command);
+  output.method = command;
 
   // add the command of the binary
   string com(cursor, cursor + 3);
@@ -1017,7 +1044,8 @@ token D1BitMis(string::iterator cursor) {
 
   // get the location
   string loc(cursor + 3, cursor + 3 + 5);
-  int location = StringBinaryToInt(loc);
+  output.SL = loc;
+  //int location = StringBinaryToInt(loc);
 
   // get the dictionary index
   string dictIndex(cursor + 3 + 5, cursor + length);
@@ -1026,8 +1054,17 @@ token D1BitMis(string::iterator cursor) {
   output.dictIn    = dictIn;
   output.dictIndex = dictIndex;
 
+  return output;
+}
+
+token D1BitMis(string::iterator cursor) {
+
+  token output = DecompPreamble(cursor, ONEBIT);
+  string original;
+
   // derive the original binary string
-  original = FlipBit(dictionary[dictIn], location);
+  int loc  = StringBinaryToInt(output.SL);
+  original = FlipBit(dictionary[output.dictIn], loc);
 
   output.original = original;
 
@@ -1036,38 +1073,15 @@ token D1BitMis(string::iterator cursor) {
 
 token D2BitCMis(string::iterator cursor) {
 
-  token output;
+  token output = DecompPreamble(cursor, TWOBITC);
 
   string original;
 
-  // command + location + dictionary index
-  int length = 3 + 5 + 4;
-
-  // add the rank of the token
-  output.rank = PatternToRank(TWOBITC);
-
-  // add the length of the token
-  output.length = length;
-
-  string binary(cursor, cursor + length);
-
-  // get the full compressed binary string
-  output.full = binary;
-
-  // get the location
-  string loc(cursor + 3, cursor + 3 + 5);
-  int location = StringBinaryToInt(loc);
-
-  // get the dictionary index
-  string dictIndex(cursor + 3 + 5, cursor + length);
-  int dictIn = StringBinaryToInt(dictIndex);
-
-  output.dictIn    = dictIn;
-  output.dictIndex = dictIndex;
-
   // derive the original binary string
-  original = FlipBit(dictionary[dictIn], location);
-  original = FlipBit(original, location + 1);
+  int loc = StringBinaryToInt(output.SL);
+
+  original = FlipBit(dictionary[output.dictIn], loc);
+  original = FlipBit(original, loc + 1);
 
   output.original = original;
 
@@ -1076,39 +1090,16 @@ token D2BitCMis(string::iterator cursor) {
 
 token D4BitMis(string::iterator cursor) {
 
-  token output;
+  token output = DecompPreamble(cursor, FOURBIT);
   string original;
 
-  // command + location + dictionary index
-  int length = 3 + 5 + 4;
-
-  // add the rank of the token
-  output.rank = PatternToRank(FOURBIT);
-
-  // add the length of the token
-  output.length = length;
-
-  string binary(cursor, cursor + length);
-
-  // get the full compressed binary string
-  output.full = binary;
-
-  // get the location
-  string loc(cursor + 3, cursor + 3 + 5);
-  int location = StringBinaryToInt(loc);
-
-  // get the dictionary index
-  string dictIndex(cursor + 3 + 5, cursor + length);
-  int dictIn = StringBinaryToInt(dictIndex);
-
-  output.dictIn    = dictIn;
-  output.dictIndex = dictIndex;
-
   // derive the original binary string
-  original = FlipBit(dictionary[dictIn], location);
-  original = FlipBit(original, location + 1);
-  original = FlipBit(original, location + 2);
-  original = FlipBit(original, location + 3);
+  int loc = StringBinaryToInt(output.SL);
+
+  original = FlipBit(dictionary[output.dictIn], loc);
+  original = FlipBit(original, loc + 1);
+  original = FlipBit(original, loc + 2);
+  original = FlipBit(original, loc + 3);
 
   output.original = original;
 
@@ -1117,14 +1108,11 @@ token D4BitMis(string::iterator cursor) {
 
 token D2BitAMis(string::iterator cursor) {
 
-  token output;
-  string original;
+  token output = DecompPreamble(cursor, TWOBITA);
+  string original = "";
 
   // command + location + dictionary index
   int length = 3 + 5 + 5 + 4;
-
-  // add the rank of the token
-  output.rank = PatternToRank(TWOBITA);
 
   // add the length of the token
   output.length = length;
@@ -1134,11 +1122,7 @@ token D2BitAMis(string::iterator cursor) {
   // get the full compressed binary string
   output.full = binary;
 
-  // get the first location
-  string loc(cursor + 3, cursor + 3 + 5);
-  int location = StringBinaryToInt(loc);
-
-  // get the first location
+  // get the second location
   string loc2(cursor + 3 + 5, cursor + 3 + 5 + 5);
   int location2 = StringBinaryToInt(loc2);
 
@@ -1149,8 +1133,10 @@ token D2BitAMis(string::iterator cursor) {
   output.dictIn    = dictIn;
   output.dictIndex = dictIndex;
 
+  int loc = StringBinaryToInt(output.SL);
+
   // derive the original binary string
-  original = FlipBit(dictionary[dictIn], location);
+  original = FlipBit(dictionary[dictIn], loc);
   original = FlipBit(original, location2);
 
   output.original = original;
@@ -1167,6 +1153,7 @@ token DDirect(string::iterator cursor) {
   output.rank    = PatternToRank(DIRECT);
   output.command = PatternToStringBinary(DIRECT);
   output.length  = length;
+  output.method  = DIRECT;
 
   string binary(cursor, cursor + length);
   output.full = binary;
@@ -1205,8 +1192,8 @@ token Decider(PATTERNS command, string::iterator cursor) {
   switch (command) {
   case ORIGNIAL:
     return DOriginal(cursor);
-  // case RLE:
-  // return DRLE(cursor);
+  case RLE:
+    return DRLE(cursor);
   case BITMASK:
     return DBitmask(cursor);
   case ONEBIT:
@@ -1227,7 +1214,7 @@ void Tokenizer(string program) {
   string command;
   PATTERNS curCommand;
   token curToken;
-  token prevToken; // used to detect RLE
+  token prevToken;
   // go over the program character by character
   for (auto it = program.begin(); it != program.end(); it++) {
 
@@ -1244,11 +1231,25 @@ void Tokenizer(string program) {
     // negate the incomming increment
     it--;
 
-    // put the token on the preprocessor
-    preProcessedOutput.push_back(curToken);
-
     // clear the command string before next itteration
     command.clear();
+
+    if (curToken.method != RLE) {
+
+      // put the token on the preprocessor
+      preProcessedOutput.push_back(curToken);
+      prevToken = curToken;
+      line++;
+
+      // case for an RLE token
+    } else {
+
+      // add the last token RLE times
+      for (int i = 0; i < curToken.rle + 1; i++) {
+        preProcessedOutput.push_back(prevToken);
+        line++;
+      }
+    }
   }
 } // END Tokenizer
 
