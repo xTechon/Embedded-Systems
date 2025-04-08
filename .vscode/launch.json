@@ -52,6 +52,32 @@
             ],
             "cwd": "${workspaceFolder}/P2",
             "preLaunchTask": "BuildP2CPP"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug P2 SIM Compression Test Case 2",
+            "program": "${workspaceFolder}/P2/bin/SIM",
+            "args": [
+                "1",
+                "${workspaceFolder}/P2/Sample_input/2nd_orig.txt",
+                "${workspaceFolder}/P2/Sample_output/cout2.txt",
+            ],
+            "cwd": "${workspaceFolder}/P2",
+            "preLaunchTask": "BuildP2CPP"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug P2 SIM Decompression Test Case 2",
+            "program": "${workspaceFolder}/P2/bin/SIM",
+            "args": [
+                "2",
+                "${workspaceFolder}/P2/Sample_output/2nd_comp.txt",
+                "${workspaceFolder}/P2/Sample_input/dout2.txt",
+            ],
+            "cwd": "${workspaceFolder}/P2",
+            "preLaunchTask": "BuildP2CPP"
         }
     ]
 }
