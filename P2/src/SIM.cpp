@@ -1214,7 +1214,7 @@ token Decider(PATTERNS command, string::iterator cursor, string::iterator end) {
   case RLE:
     return DRLE(cursor);
   case BITMASK:
-    // if (CheckForOverflow(cursor, end, 16)) return output;
+    if (CheckForOverflow(cursor, end, 16)) return output;
     return DBitmask(cursor);
   case ONEBIT:
     return D1BitMis(cursor);
