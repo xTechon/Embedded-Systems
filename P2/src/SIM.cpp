@@ -741,14 +741,14 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
 // returns a pair where the first value is the number of occurences of the
 // current token and the second value is a vector of tokens to insert.
 // otherwise, return {1, an empty vector}
-pair<int, vector<token>> RunLengthEncoding(vector<string>::iterator cursor, token input) {
+pair<int, vector<token>> RunLengthEncoding(vector<string>::iterator cursor, vector<string>::iterator end, token input) {
   vector<token> output;
 
   // used to count the number of times the current token appears consecutively
   int counter = 0;
 
   // keep counting the repetions of the token until there are no more repetions
-  while (*cursor == input.original) {
+  while (cursor != end && *cursor == input.original) {
     counter++;
     cursor++;
   }
@@ -866,7 +866,7 @@ void CompressBinary() {
 
     // for RLE: copy itterator to function to perform look ahead
     // always run a check for RLE on every command
-    pair<int, vector<token>> rle = RunLengthEncoding(it, candidates[0]);
+    pair<int, vector<token>> rle = RunLengthEncoding(it, fileInput.end(), candidates[0]);
 
     // if the rle is not empty,
     if (rle.first > 1) {
