@@ -715,10 +715,11 @@ vector<token> DecideMismatches(string input, vector<dictMatch> reference) {
     }
 
     // only use bitmasking if there is at least 1 mismatch
-    if (entry.mismatch != 0) bitmasking = BitmaskingCompression(input, entry.index, entry.mismatch);
-
-    // only append the bitmask token if there were no errors
-    if (bitmasking.length != -1) possibleCompressions.push_back(bitmasking);
+    if (entry.mismatch != 0) {
+      bitmasking = BitmaskingCompression(input, entry.index, entry.mismatch);
+      // only append the bitmask token if there were no errors
+      if (bitmasking.length != -1) possibleCompressions.push_back(bitmasking);
+    }
 
     // error, skip token
     if (temp.length == -1) continue;
@@ -936,11 +937,11 @@ string ApplyBitmask(string binary, string bitmask, int location) {
 token DOriginal(string::iterator cursor) {
   token output;
 
-  string binary = "";
+  string binary   = "";
   string original = "";
 
   // add the rank of the token
-  output.rank = PatternToRank(ORIGNIAL);
+  output.rank   = PatternToRank(ORIGNIAL);
   output.method = ORIGNIAL;
 
   // get the full command
@@ -948,7 +949,6 @@ token DOriginal(string::iterator cursor) {
 
   // list the length of the token
   output.length = output.full.length();
-
 
   output.original = original.append(cursor + 3, cursor + (3 + BINARY_SIZE));
 
@@ -1046,7 +1046,7 @@ token DecompPreamble(string::iterator cursor, PATTERNS command) {
   // get the location
   string loc(cursor + 3, cursor + 3 + 5);
   output.SL = loc;
-  //int location = StringBinaryToInt(loc);
+  // int location = StringBinaryToInt(loc);
 
   // get the dictionary index
   string dictIndex(cursor + 3 + 5, cursor + length);
@@ -1109,7 +1109,7 @@ token D4BitMis(string::iterator cursor) {
 
 token D2BitAMis(string::iterator cursor) {
 
-  token output = DecompPreamble(cursor, TWOBITA);
+  token output    = DecompPreamble(cursor, TWOBITA);
   string original = "";
 
   // command + location + dictionary index
@@ -1192,9 +1192,9 @@ bool CheckForOverflow(string::iterator cursor, string::iterator end, int length)
 
   // check to make sure a buffer overflow won't happen
   // Buffer overflow at the end of the
-  auto test = cursor;
+  auto test   = cursor;
   int counter = 0;
-  for (counter = 0; counter < length; counter++){
+  for (counter = 0; counter < length; counter++) {
     if (test != end) test++;
     else break;
   }
@@ -1207,7 +1207,6 @@ token Decider(PATTERNS command, string::iterator cursor, string::iterator end) {
   token output;
   output.length = -1;
 
-
   switch (command) {
   case ORIGNIAL:
     if (CheckForOverflow(cursor, end, 3 + BINARY_SIZE)) return output;
@@ -1215,7 +1214,7 @@ token Decider(PATTERNS command, string::iterator cursor, string::iterator end) {
   case RLE:
     return DRLE(cursor);
   case BITMASK:
-    //if (CheckForOverflow(cursor, end, 16)) return output;
+    // if (CheckForOverflow(cursor, end, 16)) return output;
     return DBitmask(cursor);
   case ONEBIT:
     return D1BitMis(cursor);
@@ -1248,7 +1247,7 @@ void Tokenizer(string program) {
     curCommand = StringBinaryToPattern(command);
 
     curToken = Decider(curCommand, it, program.end());
-    
+
     // finished, padding will cause an error, leave before buffer overflow
     if (curToken.length == -1) break;
 
