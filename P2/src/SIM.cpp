@@ -100,17 +100,17 @@ enum PATTERNS { ORIGNIAL, RLE, BITMASK, ONEBIT, TWOBITC, FOURBIT, TWOBITA, DIREC
 struct token
 {
   PATTERNS method;  // Debugabble compression method
-  string full;      // the entire compressed binary string
-  int length;       // store the length of the compression
-  int rank;         // rank of the command
-  int dictIn;       // dictionary index as integer
-  int rle;          // used for RLE
-  string command;   // 3-bit command string
-  string original;  // the original binary string
-  string SL;        // 5-bit Starting location or first mismatch location
-  string ML2;       // 5-bit 2nd Mismatch location
-  string bitmask;   // 4-bit bitmask
-  string dictIndex; // 4-bit index of the related dictionary entry
+  string full = "";      // the entire compressed binary string
+  int length = 0;       // store the length of the compression
+  int rank = 0;         // rank of the command
+  int dictIn = 0;       // dictionary index as integer
+  int rle = 0;          // used for RLE
+  string command = "";   // 3-bit command string
+  string original = "";  // the original binary string
+  string SL = "";        // 5-bit Starting location or first mismatch location
+  string ML2 = "";       // 5-bit 2nd Mismatch location
+  string bitmask = "";   // 4-bit bitmask
+  string dictIndex = ""; // 4-bit index of the related dictionary entry
 };
 
 // tracks the mismatches of a binary and a specific dictionary entry
