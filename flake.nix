@@ -32,6 +32,7 @@
           extensions.open-vsx.zokugun.explicit-folding
           extensions.open-vsx.tomoki1207.pdf
           extensions.open-vsx.twxs.cmake
+          extensions.open-vsx.webfreak.debug
         ];
       };
       code = packages.${system}.codium;
