@@ -283,6 +283,7 @@ int PatternToRank(PATTERNS input) {
   case DIRECT:
     return 7;
   }
+  return 0;
 } // END PatternToRank
 
 // user enumerables to for better control string management
@@ -305,6 +306,7 @@ string PatternToStringBinary(PATTERNS input) {
   case DIRECT:
     return "111";
   }
+  return "000";
 } // END PatternToStringBinary
 
 // Turn Binary string into the correct command
@@ -339,6 +341,7 @@ int PatternToNumMismatch(PATTERNS input) {
   case DIRECT:
     return 0;
   }
+  return 0;
 }
 
 // #endregion
